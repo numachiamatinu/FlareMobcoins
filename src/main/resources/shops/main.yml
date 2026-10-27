@@ -1,0 +1,178 @@
+#  Flare Mobcoins · shops/ · every .yml file here is a shop (a shop, a category, a hub ...)
+#  In-game: /mobcoins editor <name>   (drag & drop · close = save · shift + left click on an item = product settings)
+#  Open it: /mobcoins shop <name>, its open-commands, or [open] <name> from another menu ([back] goes back)
+#
+#  ── Menu ────────────────────────────────────────────────
+#  enabled          false = shop off for everyone         rows   1-6 rows (9-54 slots)
+#  open-commands    [vipshop] → /vipshop opens it         open-permission   "" = everyone
+#
+#  ── Items ───────────────────────────────────────────────
+#  slots            "4"  "19-25"  "0-8,45-53"   (row 1 = 0-8, row 2 = 9-17 ...)
+#  material         DIAMOND · head:{player} · head:Notch · texture:<minecraft-heads value> · ia:<id> (ItemsAdder)
+#  name, lore, amount, glow, custom-model-data, admin-only (players don't see it), update (redraw every second)
+#  actions          on click: [open] <menu> [back] [close] [player] cmd [console] cmd [message] text [sound] key
+#                   [LEFT] / [RIGHT] before an action = only for that click
+#  show-if/hide-if  checks: [has_mobcoins] 100  [has_permission] node  [!has_permission] node  [expression] a >= b
+#  priority         more items in one slot: the first one that can be seen (lowest priority) is shown
+#
+#  ── Products (an item with a price) ──────────────────────
+#  price            mobcoins it costs
+#  give             items given: "DIAMOND 3", {material, name, lore ...} or the exact item saved by the editor
+#  commands         console commands: {player} {uuid}
+#  confirm          true = a confirm menu opens first (menus/confirm.yml)
+#  limit            times each player can buy it, limit-reset: never / daily / weekly / monthly
+#  stock            pieces for the whole server (all servers with MySQL), stock-reset like limit-reset
+#  permission       needed to buy it
+#  Texts: {price} {limit} {bought} {left} {stock} {stock_left} {missing} {mobcoins}
+#  The lines added under every product (price, click to buy ...) are in "texts" (default: shop-texts.yml).
+#
+#  ── Rotating shop ───────────────────────────────────────
+#  rotating_shop    normal_slots / premium_slots: where the rotating items go
+#                   normal_refresh / premium_refresh: seconds between two rotations
+#  On an item       rotating_shop: { type: normal|premium, stock_type: SERVER|PLAYER, stock_amount: 5 }
+#                   SERVER = one stock for everybody · PLAYER = each player can buy stock_amount times · 0 = no limit
+#                   These items don't need a slot. {stock} {max_stock} = stock of the rotation
+#  {normal_time_left} {premium_time_left} work everywhere in the shop
+#
+#  ── Format ──────────────────────────────────────────────
+#  Colors    &a &c &e &f &7 ...   &l bold  &o italic  &n underline
+#  Hex       "&#f7c948Text"   Gradient "<gradient:#f7b733:#fce38a>Text</gradient>"   Rainbow "<rainbow>Text</rainbow>"
+#  Tip       always write texts between "quotes"
+#  FlareMobcoins 3.x shops (menu_title, size, click_commands, [buy(mobcoins)] ...) work as they are.
+
+enabled: true
+title: "<gradient:#f7b733:#fce38a><bold>MOBCOINS SHOP</bold></gradient>"
+rows: 5
+open-commands: []
+open-permission: ""
+rotating_shop:
+  normal_slots: [20, 21, 22]
+  premium_slots: [24]
+  # 6 hours / 24 hours
+  normal_refresh: 21600
+  premium_refresh: 86400
+items:
+  balance:
+    slots: "4"
+    material: "head:{player}"
+    name: "<gradient:#f7b733:#fce38a><bold>YOUR MOBCOINS</bold></gradient>"
+    lore:
+      - "&7Balance: &#f7c948{mobcoins_commas}"
+      - "&7Multiplier: &#f7c948x{multiplier}"
+      - ""
+      - "&7Kill mobs to earn mobcoins! &8(/mobcoins drops)"
+    update: true
+  normal-info:
+    slots: "11"
+    material: "CLOCK"
+    name: "<gradient:#b3ffab:#12fff7><bold>NORMAL ITEMS</bold></gradient>"
+    lore:
+      - "&7New items in &f{normal_time_left}"
+    update: true
+  premium-info:
+    slots: "15"
+    material: "NETHER_STAR"
+    glow: true
+    name: "<gradient:#ff9966:#ff5e62><bold>PREMIUM ITEM</bold></gradient>"
+    lore:
+      - "&7New item in &f{premium_time_left}"
+    update: true
+
+  # ── Rotating items: 3 of these go in normal_slots ──
+  dirt:
+    material: "DIRT"
+    amount: 64
+    name: "&#c08b5c&lDirt &7x64"
+    price: 20
+    give:
+      - "DIRT 64"
+    rotating_shop:
+      type: normal
+      stock_type: SERVER
+      stock_amount: 10
+  apple:
+    material: "GOLDEN_APPLE"
+    amount: 3
+    name: "&e&lGolden Apples &7x3"
+    price: 50
+    give:
+      - "GOLDEN_APPLE 3"
+    rotating_shop:
+      type: normal
+      stock_type: PLAYER
+      stock_amount: 2
+  arrows:
+    material: "ARROW"
+    amount: 32
+    name: "&f&lArrows &7x32"
+    price: 15
+    give:
+      - "ARROW 32"
+    rotating_shop:
+      type: normal
+      stock_type: SERVER
+      stock_amount: 0
+  bread:
+    material: "BREAD"
+    amount: 16
+    name: "&6&lBread &7x16"
+    price: 5
+    give:
+      - "BREAD 16"
+    rotating_shop:
+      type: normal
+      stock_type: SERVER
+      stock_amount: 0
+
+  # ── Premium items: 1 of these goes in premium_slots ──
+  diamonds:
+    material: "DIAMOND"
+    amount: 3
+    glow: true
+    name: "&b&lDiamonds &7x3"
+    price: 300
+    give:
+      - "DIAMOND 3"
+    actions:
+      - "[TITLE] <gradient:#ff9966:#ff5e62><bold>PREMIUM</bold></gradient>;&7Thanks for your purchase!"
+    rotating_shop:
+      type: premium
+      stock_type: SERVER
+      stock_amount: 5
+  experience:
+    material: "EXPERIENCE_BOTTLE"
+    amount: 32
+    glow: true
+    name: "&a&lExperience Bottles &7x32"
+    price: 250
+    confirm: true
+    give:
+      - "EXPERIENCE_BOTTLE 32"
+    rotating_shop:
+      type: premium
+      stock_type: PLAYER
+      stock_amount: 1
+
+  # Always in the shop
+  beacon:
+    slots: "31"
+    material: "BEACON"
+    name: "&b&lBeacon"
+    price: 1000
+    confirm: true
+    give:
+      - "BEACON 1"
+  close:
+    slots: "40"
+    material: "BARRIER"
+    name: "&cClose"
+    actions:
+      - "[close]"
+decorations:
+  - slots: "0-3,5-10,12-14,16-19,23,25-30,32-39,41-44"
+    material: "YELLOW_STAINED_GLASS_PANE"
+    name: " "
+    lore: []
+    glow: false
+    admin-only: false
+    actions: []

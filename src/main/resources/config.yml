@@ -1,0 +1,145 @@
+#  Flare Mobcoins · config.yml · by TMDevelopment
+#  After editing: /mobcoins reload   (storage changes need a restart)
+#
+#  ── Format ──────────────────────────────────────────────
+#  Colors    &a &c &e &f &7 ...   &l bold  &o italic  &n underline
+#  Hex       "&#f7c948Text"   (1.16+, older versions show the nearest color)
+#  Gradient  "<gradient:#f7b733:#fce38a>Text</gradient>"   Rainbow "<rainbow>Text</rainbow>"
+#  Click     "<click:run_command:'/mobcoins'>Text</click>"   Hover "<hover:show_text:'Text'>Text</hover>"
+#  Tip       always write texts between "quotes"
+#
+#  Mob drops are in drops.yml, shops in shops/, chat messages in lang/en.yml.
+
+config-version: 1
+
+language: en
+
+# Missing plugins are downloaded and started automatically (no restart needed).
+# Sources are tried in order: modrinth:<slug>, hangar:<slug>, github:<owner/repo>, url:<direct link>
+# Vault only connects the money for [buy(money)]: you still need an economy plugin (EssentialsX, CMI...).
+auto-install:
+  enabled: true
+  plugins:
+    PlaceholderAPI:
+      enabled: true
+      sources:
+        - "hangar:PlaceholderAPI"
+        - "modrinth:placeholderapi"
+        - "github:PlaceholderAPI/PlaceholderAPI"
+    Vault:
+      enabled: false
+      sources:
+        - "github:MilkBowl/Vault"
+
+# Where balances and multipliers are saved.
+#   yaml   -> data/data.yml (small servers)
+#   sqlite -> data/data.db  (default, one server)
+#   mysql  -> shared database: several servers see the same balances (mariadb also works)
+# Same files and table as FlareMobcoins 3.x: old data is used as it is.
+storage:
+  type: sqlite
+  # Table name (3.x used "flaretokens" by mistake: after the update your old name is kept)
+  table: "flaremobcoins"
+  mysql:
+    host: "localhost"
+    port: 3306
+    database: "minecraft"
+    username: "root"
+    password: ""
+    flags: "useSSL=false&characterEncoding=utf8"
+  # MySQL only: seconds between reloads of online balances (changes made on other servers). 0 = off
+  refresh-seconds: 10
+
+# MobCoins given to a player the first time he joins. 0 = none
+first-join-mobcoins: 0
+
+pay:
+  enabled: true
+  # Allow /mobcoins pay to players who are offline
+  allow-offline: true
+  min-amount: 1
+  # Seconds between two payments of the same player. 0 = off
+  cooldown-seconds: 0
+
+# Drops on the ground: killed mobs drop a coin item instead of giving the mobcoins directly.
+# The player gets them when he picks it up (pickup-actions). Coins close to each other become one.
+# Placeholders: {amount} {amount_formatted} {amount_commas} {player}
+coins-on-ground:
+  enabled: false
+  # Only the player who killed the mob can pick up the coin
+  only-killer: true
+  material: "[head] eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOTVmZDY3ZDU2ZmZjNTNmYjM2MGExNzg3OWQ5YjUzMzhkNzMzMmQ4ZjEyOTQ5MWE1ZTE3ZThkNmU4YWVhNmMzYSJ9fX0="
+  # Name shown above the coin ("" = no name)
+  name: "&#f7c948{amount} MobCoins"
+  # Seconds before a coin nobody picked up disappears
+  despawn-seconds: 300
+  pickup-actions:
+    - "[mobcoins_give] {amount}"
+    - "[ACTIONBAR] &7You picked up &#f7c948{amount} &7mobcoins"
+    - "[SOUND] ENTITY_EXPERIENCE_ORB_PICKUP 1 1.5"
+
+# Shops are the files in shops/ (main.yml is an example with every option explained).
+shop:
+  enabled: true
+  # Shop opened by /mobcoins shop and by the commands below
+  main-shop: "main"
+  # Extra commands that open the main shop (empty = none)
+  open-command:
+    - "mobcoinshop"
+  # How often items with "update: true" are redrawn, in ticks (20 = 1 second)
+  update-ticks: 20
+  # Milliseconds between two clicks of a player (stops double purchases)
+  click-cooldown-ms: 200
+  # Products that cost at least this much open the confirm menu first (0 = only products with confirm: true)
+  confirm-above: 0
+  # Time left of the rotating shops: {days} {hours} {minutes} {seconds}
+  rotating-time-format: "{days}d {hours}h {minutes}m {seconds}s"
+
+top:
+  # Players kept in the top list (/mobcoins top and %flaremobcoins_top_<n>_name%)
+  size: 10
+  # Seconds between two refreshes of the top list
+  refresh-seconds: 60
+
+# Suffixes of the short format (1.2k, 3.4M ...)
+format:
+  suffixes: ["k", "M", "B", "T", "Q"]
+
+# What normal players can use (admins can always use everything). Also in /mobcoins settings > Player access.
+# false = the command is hidden from /mobcoins help and the tab list
+player-access:
+  # /mobcoins menu (menus/mobcoins.yml)
+  menu: true
+  shop: true
+  drops: true
+  top: true
+  pay: true
+
+# Menus of the plugin (/mobcoins menu, drops, top, confirm) are in menus/, the shops in shops/.
+# Edit them in game with /mobcoins editor, every option with /mobcoins settings.
+menus:
+  # Glass of the empty slots of the admin menus
+  border: "YELLOW_STAINED_GLASS_PANE"
+
+sounds:
+  enabled: true
+  click: "UI_BUTTON_CLICK"
+  buy: "ENTITY_PLAYER_LEVELUP"
+  receive: "ENTITY_EXPERIENCE_ORB_PICKUP"
+  pay: "ENTITY_PLAYER_LEVELUP"
+  open-shop: "BLOCK_CHEST_OPEN"
+  error: "ENTITY_VILLAGER_NO"
+
+# Looks for a new FlareMobcoins version on GitHub (on start and every 6 hours). It only reads the public
+# releases: nothing is sent. New versions are written in the console and admins get a message when they join.
+# Betas are only offered to servers that already use a beta.   /mobcoins version
+update-check: true
+
+# Anonymous usage statistics (TMDStats): plugin and Minecraft version, server software, Java version,
+# player count, storage type, number of shops and drops, coins on ground on/off. No player names, no IPs.
+# Also off for every TMDevelopment plugin in plugins/TMDStats/config.yml
+stats: true
+
+logs:
+  # Every change of balance in logs/transactions.log (mob drops are not written, there are too many)
+  transactions: true

@@ -1,0 +1,288 @@
+#  Flare Mobcoins · texts of the admin menus (/mobcoins settings and the editor)
+#  Player menu texts are in menus/*.yml and shops/*.yml (section "texts")
+#  Chat messages are in lang/en.yml   ·   after editing: /mobcoins reload
+#  Placeholders {value} {menu} ... are filled by the plugin, keep them.
+#
+#  ── Format ──────────────────────────────────────────────
+#  Colors    &a &c &e &f &7 ...   &l bold  &o italic  &n underline
+#  Hex       "&#f7c948Text"
+#  Gradient  "<gradient:#f7b733:#fce38a>Text</gradient>"   Rainbow "<rainbow>Text</rainbow>"
+#  Tip       always write texts between "quotes"
+
+common:
+  enabled: "&aEnabled"
+  disabled: "&cDisabled"
+  toggle-lore:
+    - ""
+    - "&7Status: {status}"
+    - "&#f7c948Click to toggle"
+  value-lore:
+    - ""
+    - "&7Current: &f{value}"
+    - "&#f7c948Click to change"
+  back:
+    name: "&c← Back"
+    lore: []
+  close:
+    name: "&cClose"
+    lore: []
+  previous:
+    name: "&#f7c948← Previous page"
+    lore: []
+  next:
+    name: "&#f7c948Next page →"
+    lore: []
+settings:
+  title: "<gradient:#f7b733:#fce38a>Flare Mobcoins</gradient> &7- Settings"
+  info:
+    name: "<gradient:#f7b733:#fce38a><bold>FlareMobcoins</bold></gradient> &7v{version}"
+    lore:
+      - "&7Storage: &f{storage}"
+      - "&7Accounts: &f{accounts}"
+      - "&7Shops: &f{shops} &8· &7Drops: &f{drops}"
+  drops:
+    name: "&fMob drops"
+    lore: ["&7Killed mobs give mobcoins", "&7(drops.yml)."]
+  spawner-mobs:
+    name: "&fNo mobcoins from spawners"
+    lore: ["&7Mobs of spawners give nothing."]
+  coins-on-ground:
+    name: "&fCoins on the ground"
+    lore: ["&7Mobs drop a coin to pick up", "&7instead of giving the mobcoins."]
+  only-killer:
+    name: "&fOnly the killer picks up"
+    lore: ["&7Only who killed the mob", "&7can pick up its coin."]
+  pay:
+    name: "&fPayments"
+    lore: ["&7Players can send mobcoins", "&7with /mobcoins pay."]
+  pay-offline:
+    name: "&fPay offline players"
+    lore: ["&7/mobcoins pay also works", "&7for players who are offline."]
+  shop:
+    name: "&fShops"
+    lore: ["&7Every shop of shops/."]
+  sounds:
+    name: "&fSounds"
+    lore: ["&7Sounds of payments,", "&7purchases and menus."]
+  update-check:
+    name: "&fUpdate check"
+    lore: ["&7Tells admins when a new", "&7version is out (GitHub)."]
+  first-join:
+    name: "&fFirst join mobcoins"
+    lore: ["&7Given to new players."]
+  pay-min:
+    name: "&fMinimum payment"
+    lore: ["&7Smallest /mobcoins pay."]
+  pay-cooldown:
+    name: "&fPayment cooldown"
+    lore: ["&7Seconds between two payments."]
+  confirm-above:
+    name: "&fConfirm purchases from"
+    lore: ["&7Products that cost at least", "&7this much ask a confirmation."]
+  global-multiplier:
+    name: "&fServer multiplier"
+    lore: ["&7Every mob drop is multiplied", "&7by this (also /mobcoins multiplier global)."]
+  main-shop:
+    name: "&fMain shop"
+    lore: ["&7Opened by /mobcoins shop."]
+  menus:
+    name: "&#f7c948Menus and shops"
+    lore: ["&7{shops} shops + the menus of the plugin", "&7Edit them with drag and drop", "", "&#f7c948Click to open"]
+  access:
+    name: "&#f7c948Player access"
+    lore: ["&7What normal players can use", "", "&#f7c948Click to open"]
+  top:
+    name: "&#f7c948Top players"
+    lore: ["", "&#f7c948Click to open"]
+  drops-menu:
+    name: "&#f7c948Mob drops menu"
+    lore: ["&7What players see with /mobcoins drops", "", "&#f7c948Click to open"]
+  reload:
+    name: "&aReload files"
+    lore: ["&7Reads every file again"]
+access:
+  title: "&7Player access"
+  menu:
+    name: "&f/mobcoins menu"
+    lore: ["&7The mobcoins menu."]
+  shop:
+    name: "&fShops"
+    lore: ["&7/mobcoins shop and the shop commands."]
+  drops:
+    name: "&fMob drops menu"
+    lore: ["&7/mobcoins drops"]
+  top:
+    name: "&fTop players"
+    lore: ["&7/mobcoins top"]
+  pay:
+    name: "&fPayments"
+    lore: ["&7/mobcoins pay"]
+menus:
+  title: "<gradient:#f7b733:#fce38a>Menus and shops</gradient>"
+  help:
+    name: "&#f7c948How it works"
+    lore:
+      - "&7Top: the menus of the plugin."
+      - "&7Below: your shops (shops/*.yml)."
+      - ""
+      - "&#f7c948Left-click &7edit with drag and drop"
+      - "&#f7c948Right-click &7open it like a player"
+      - "&#f7c948Shift-right-click &7on / off"
+  builtin:
+    name: "&f{menu}"
+    lore: ["&7{description}", "&7Status: {status}", "", "&#f7c948Left-click &7edit  &#f7c948Right-click &7open", "&#f7c948Shift-right-click &7on / off"]
+  shop:
+    name: "&f{menu}"
+    lore: ["&7Items: &f{items} &8· &7products: &f{products}", "&7Commands: &f{commands}", "&7Status: {status}", "",
+      "&#f7c948Left-click &7edit  &#f7c948Right-click &7open", "&#f7c948Shift-right-click &7on / off"]
+  rotating-shop:
+    name: "&f{menu}"
+    lore: ["&7Items: &f{items} &8· &7products: &f{products}", "&7Rotating items: &f{rotating}", "&7Commands: &f{commands}",
+      "&7Status: {status}", "", "&#f7c948Left-click &7edit  &#f7c948Right-click &7open", "&#f7c948Shift-right-click &7on / off"]
+  new:
+    name: "&a+ New shop"
+    lore: ["&7A new empty shop / category", "", "&#f7c948Click &7and write its name"]
+  descriptions:
+    mobcoins: "/mobcoins menu: balance, shop, drops, top"
+    top: "Players with the most mobcoins"
+    drops: "/mobcoins drops: what every mob gives"
+    confirm: "Opens before a purchase"
+editor:
+  title: "&7Editing » &f{menu} &7(close = save)"
+  admin-only-tag: ["&c● admins only"]
+  actions-tag: "&8» {actions}"
+  more-tag: "&8+{count} more item(s) in this slot"
+  product-tag: "&8» price {price}"
+  list-slot:
+    name: "&bList slot #{number}"
+    lore: ["&7Entries of the list go here.", "&7Move it, or take it out to remove the slot."]
+  rotating-slot:
+    normal:
+      name: "&aNormal rotating slot #{number}"
+      lore: ["&7{items} items take turns here.", "&7Move it, or take it out to remove the slot.", "&#f7c948Shift-left-click &7the items"]
+    premium:
+      name: "&dPremium rotating slot #{number}"
+      lore: ["&7{items} items take turns here.", "&7Move it, or take it out to remove the slot.", "&#f7c948Shift-left-click &7the items"]
+palette:
+  title: "&7Add to slot {slot}"
+  help:
+    name: "&#f7c948Palette"
+    lore: ["&7Pick what to put on the slot.", "&7Items of your inventory can also be", "&7dragged into the editor directly."]
+  element:
+    lore: ["&7In &f{amount} &7slot(s)", "", "&#f7c948Click &7to put it here"]
+  glass:
+    name: "&fGlass pane"
+    lore: ["&#f7c948Click &7to put it here"]
+  link:
+    name: "&#f7c948Button to another menu"
+    lore: ["&7Opens a shop or a menu", "&7([back] there comes back here)", "", "&#f7c948Click &7to pick the menu"]
+  back-button:
+    name: "&#f7c948Back button"
+    lore: ["&7Goes to the previous menu"]
+    item: "&c← Back"
+  close-button:
+    name: "&#f7c948Close button"
+    lore: ["&7Closes the menu"]
+    item: "&cClose"
+  balance:
+    name: "&#f7c948Balance head"
+    lore: ["&7The head of the player", "&7with his mobcoins"]
+    item: "&f{player}"
+    item-lore: ["&7Balance: &#f7c948{mobcoins_commas} mobcoins"]
+  sell-hand:
+    name: "&a+ Sell the item in your hand"
+    lore: ["&7Exactly that item (enchantments,", "&7name, everything)", "", "&#f7c948Click &7and write the price"]
+  rotating-normal:
+    name: "&a+ Normal rotating slot"
+    lore: ["&7The normal items of the rotation", "&7take turns on this slot", "", "&#f7c948Click &7to put it here"]
+  rotating-premium:
+    name: "&d+ Premium rotating slot"
+    lore: ["&7The premium items of the rotation", "&7take turns on this slot", "", "&#f7c948Click &7to put it here"]
+picker:
+  title: "&7Button to which menu?"
+  entry:
+    lore: ["&7{title}", "", "&#f7c948Click &7to pick it"]
+  button-lore: ["", "&#f7c948Click to open"]
+rotation:
+  title: "&7Rotating items » &f{type}"
+  help:
+    name: "&#f7c948Rotating items"
+    lore: ["&f{items} &7items take turns in &f{slots} &7slot(s).", "", "&#f7c948Click &7an item for its settings",
+      "&#f7c948Shift-right-click &7take it out of the rotation"]
+  entry-lore: ["", "&8Price: {price} &8· stock: {stock} ({type})"]
+  every:
+    name: "&fNew items every"
+    lore: ["&7How often the items change."]
+  add-hand:
+    name: "&a+ Add the item in your hand"
+    lore: ["&7Exactly that item, as a product", "&7of this rotation", "", "&#f7c948Click &7and write the price"]
+  now:
+    name: "&#f7c948Change them now"
+    lore: ["&7New items in the {slots} slot(s) right now"]
+product:
+  title: "&7Edit » &f{item}"
+  for-sale: "&afor sale"
+  not-for-sale: "&7not for sale (just a button)"
+  info:
+    name: "&f{item}"
+    lore: ["&7{state}", "&7Name: {name}"]
+  price:
+    name: "&fPrice"
+    lore: ["&7Mobcoins it costs."]
+    click: ["", "&7Current: &f{value}", "&#f7c948Left-click &7to change", "&#f7c948Right-click &7not for sale"]
+  confirm:
+    name: "&fConfirm menu"
+    lore: ["&7A confirm menu opens", "&7before the purchase."]
+  limit:
+    name: "&fLimit per player"
+    lore: ["&7Times each player can buy it."]
+    click: ["", "&7Current: &f{value} &8· &7resets: &f{reset}", "&#f7c948Left-click &7to change", "&#f7c948Right-click &7reset time"]
+  stock:
+    name: "&fStock (whole server)"
+    lore: ["&7Pieces for everybody."]
+    click: ["", "&7Current: &f{value} &8· &7resets: &f{reset}", "&#f7c948Left-click &7to change", "&#f7c948Right-click &7reset time"]
+  permission:
+    name: "&fPermission to buy"
+    lore: ["&7Needed to buy it."]
+    click: ["", "&7Current: &f{value}", "&#f7c948Left-click &7to change", "&#f7c948Right-click &7remove"]
+  admin-only:
+    name: "&fAdmins only"
+    lore: ["&7Normal players don't see it."]
+  rotation:
+    name: "&fRotation"
+    lore: ["&7none: always on its slot", "&7normal / premium: takes turns", "&7in the rotating slots."]
+    click: ["", "&7Current: &f{value}", "&#f7c948Click &7to switch"]
+  rotation-off:
+    name: "&fRotation"
+    lore: ["&7This shop has no rotating slots:", "&7add them with the palette."]
+    click: ["", "&7Current: &f{value}"]
+  rotation-stock:
+    name: "&fStock of one rotation"
+    lore: ["&7Pieces until the next rotation."]
+    click: ["", "&7Current: &f{value} &8· &f{type}", "&#f7c948Left-click &7to change", "&#f7c948Right-click &7server / each player"]
+  name:
+    name: "&fName"
+    lore: ["&7Name of the item."]
+  commands:
+    name: "&fCommands"
+    lore: ["&7Console commands run", "&7when it's bought."]
+    click: ["", "&7Commands: &f{value}", "&7Last: &f{last}", "&#f7c948Left-click &7add one", "&#f7c948Right-click &7remove the last"]
+  give:
+    name: "&fItems given"
+    lore: ["&7Items the buyer gets."]
+    click: ["", "&7Items: &f{value}", "&#f7c948Left-click &7add the item in your hand", "&#f7c948Right-click &7remove the last"]
+  delete:
+    name: "&cDelete"
+    lore: ["&7Removes the item from the menu", "", "&cShift-click &7to delete"]
+  resets:
+    never: "never"
+    daily: "every day"
+    weekly: "every week"
+    monthly: "every month"
+  rotations:
+    none: "none"
+    normal: "normal"
+    premium: "premium"
+  stock-types:
+    server: "for the whole server"
+    player: "for each player"

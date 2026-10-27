@@ -1,0 +1,251 @@
+#  Flare Mobcoins · lang/en.yml · chat messages (shop texts are in shops/)
+#  One line or a list of lines   ·   "" or [] = off   ·   {prefix} = the prefix below
+#
+#  ── Format ──────────────────────────────────────────────
+#  Colors    &a &c &e &f &7 ...   &l bold  &o italic  &n underline
+#  Hex       "&#f7c948Text"   Gradient "<gradient:#f7b733:#fce38a>Text</gradient>"
+#  Click     "<click:run_command:'/mobcoins'>Text</click>"   Hover "<hover:show_text:'Text'>Text</hover>"
+#  Every message also understands PlaceholderAPI placeholders.
+
+prefix: "<gradient:#f7b733:#fce38a><bold>MOBCOINS</bold></gradient> &7» &7"
+
+general:
+  no-permission: "{prefix}&cYou don't have permission to do this."
+  players-only: "{prefix}&cOnly players can use this."
+  player-not-found: "{prefix}&f{target} &7has never joined the server."
+  invalid-amount: "{prefix}&f{input} &7is not a valid amount."
+  unknown-command: "{prefix}&7Unknown command. <click:run_command:'/{label} help'><hover:show_text:'&7Click to see the commands'>&#f7c948/{label} help</hover></click>"
+  reloaded: "{prefix}&7Files reloaded &8(&7{shops} shops, {drops} drops&8)&7."
+  cancelled: "{prefix}&7Another plugin blocked this change."
+  wait: "{prefix}&7Wait a moment before doing that again."
+
+# Shown when a player writes /mobcoins
+balance:
+  self: "{prefix}&7You have &#f7c948{mobcoins_commas} &7mobcoins."
+  other: "{prefix}&f{target} &7has &#f7c948{amount_commas} &7mobcoins."
+  hint: "{prefix}<click:run_command:'/{label} help'><hover:show_text:'&7Click to see the commands'>&7Commands: &#f7c948/{label} help</hover></click>"
+
+first-join: "{prefix}&7Welcome! You received &#f7c948{amount_commas} &7mobcoins."
+
+help:
+  # Only the commands the player can use are shown. Lines are clickable.
+  header:
+    - ""
+    - " <gradient:#f7b733:#fce38a><bold>FLARE MOBCOINS</bold></gradient> &7v{version}"
+    - ""
+  lines:
+    balance: " <click:suggest_command:'/{label} balance '><hover:show_text:'&7Click to write it'>&#f7c948/{label} balance &7[player]</hover></click> &7- see a balance"
+    pay: " <click:suggest_command:'/{label} pay '><hover:show_text:'&7Click to write it'>&#f7c948/{label} pay &7<player> <amount></hover></click> &7- send mobcoins"
+    menu: " <click:run_command:'/{label} menu'><hover:show_text:'&7Click to open'>&#f7c948/{label} menu</hover></click> &7- your mobcoins menu"
+    shop: " <click:run_command:'/{label} shop'><hover:show_text:'&7Click to open'>&#f7c948/{label} shop &7[shop]</hover></click> &7- open the shop"
+    drops: " <click:run_command:'/{label} drops'><hover:show_text:'&7Click to open'>&#f7c948/{label} drops</hover></click> &7- mobcoins of every mob"
+    top: " <click:run_command:'/{label} top'><hover:show_text:'&7Click to open'>&#f7c948/{label} top</hover></click> &7- richest players"
+    give: " <click:suggest_command:'/{label} give '><hover:show_text:'&7Click to write it'>&#f7c948/{label} give &7<player|*> <amount> [-s]</hover></click> &7- give mobcoins"
+    remove: " <click:suggest_command:'/{label} remove '><hover:show_text:'&7Click to write it'>&#f7c948/{label} remove &7<player|*> <amount> [-s]</hover></click> &7- remove mobcoins"
+    set: " <click:suggest_command:'/{label} set '><hover:show_text:'&7Click to write it'>&#f7c948/{label} set &7<player> <amount> [-s]</hover></click> &7- set a balance"
+    multiplier: " <click:suggest_command:'/{label} multiplier '><hover:show_text:'&7Click to write it'>&#f7c948/{label} multiplier &7<set|reset|global></hover></click> &7- drop multipliers"
+    settings: " <click:run_command:'/{label} settings'><hover:show_text:'&7Click to open'>&#f7c948/{label} settings</hover></click> &7- every option in a menu"
+    editor: " <click:run_command:'/{label} editor'><hover:show_text:'&7Click to open'>&#f7c948/{label} editor &7[menu]</hover></click> &7- edit menus and shops in game &8(also /{label} layout)"
+    layout: " <click:suggest_command:'/{label} layout '><hover:show_text:'&7Click to write it'>&#f7c948/{label} layout &7<add|import|chest|remove> <menu></hover></click> &7- build a menu in a chest"
+    reload: " <click:run_command:'/{label} reload'><hover:show_text:'&7Click to reload'>&#f7c948/{label} reload</hover></click> &7- reload the files"
+    migrate: " <click:suggest_command:'/{label} migrate '><hover:show_text:'&7Click to write it'>&#f7c948/{label} migrate &7<yaml|sqlite|mysql></hover></click> &7- copy all balances"
+    version: " <click:run_command:'/{label} about'><hover:show_text:'&7Click to open'>&#f7c948/{label} about</hover></click> &7- plugin info and updates"
+  footer:
+    - " &7-s = silent (the player gets no message)"
+    - ""
+
+# /mobcoins about (also /mobcoins version): plugin info for admins
+about:
+  header:
+    - ""
+    - " <gradient:#f7b733:#fce38a><bold>FLARE MOBCOINS</bold></gradient>"
+  checking: " &7Checking for updates..."
+  # first line, depends on the update check
+  latest: " &7Plugin version: &a{version} &8- &alatest version!"
+  outdated: " &7Plugin version: &c{version} &8- &c&lOUTDATED! &7Please update to &#f7c948{latest} <click:open_url:'{url}'><hover:show_text:'&7Click to open the download page'>&#f7c948&n[Download]</hover></click>"
+  outdated-console: " &7Plugin version: &c{version} &8- &c&lOUTDATED! &7Please update to &#f7c948{latest}&7: &f{url}"
+  failed: " &7Plugin version: &f{version} &8- &7could not check for updates right now"
+  check-off: " &7Plugin version: &f{version} &8- &7update check is off"
+  info:
+    - " &7Server version: &f{minecraft} &8({server})"
+    - " &7Java: &f{java} &8| &7Storage: &f{storage}"
+    - " &7Update notifier: {notifier}"
+    - " &7Plugin hooks: {hooks}"
+    - " &7Permissions: <click:run_command:'/{label} about permissions'><hover:show_text:'&7Click to see every permission'>&#f7c948&n[Show list]</hover></click>"
+  notifier-on: "&atrue"
+  notifier-off: "&cfalse"
+  # {hook} = name of the plugin; hooked = installed and in use, missing = not installed
+  hooked: "&a{hook}"
+  missing: "&8{hook}"
+  separator: "&7, "
+  permissions:
+    header:
+      - ""
+      - " <gradient:#f7b733:#fce38a><bold>FLARE MOBCOINS</bold></gradient> &7permissions"
+    line: " <click:copy_to_clipboard:'{permission}'><hover:show_text:'&7Click to copy'>&#f7c948{permission}</hover></click> &8- &7{description} &8({default})"
+    # who has it without a permissions plugin
+    everyone: "everyone"
+    op: "op"
+    not-op: "not op"
+    nobody: "nobody"
+
+# New version found (update-check in config.yml). "join" is sent to admins (flaremobcoins.admin) when they join
+update:
+  console: "{prefix}&7A new version is out: &#f7c948{latest} &8(&7you have {current}&8)&7. Download: &f{url}"
+  join: "{prefix}&7FlareMobcoins &#f7c948{latest} &7is out &8(&7you have {current}&8)&7. <click:open_url:'{url}'><hover:show_text:'&7Click to open the download page'>&#f7c948&n[Download]</hover></click>"
+
+usage:
+  balance: "{prefix}&7Use &#f7c948/{label} balance [player]"
+  pay: "{prefix}&7Use &#f7c948/{label} pay <player> <amount>"
+  give: "{prefix}&7Use &#f7c948/{label} give <player|*> <amount> [-s]"
+  remove: "{prefix}&7Use &#f7c948/{label} remove <player|*> <amount> [-s]"
+  set: "{prefix}&7Use &#f7c948/{label} set <player> <amount> [-s]"
+  migrate: "{prefix}&7Use &#f7c948/{label} migrate <yaml|sqlite|mysql>"
+  multiplier:
+    - "{prefix}&7Multipliers of the mob drops:"
+    - " <click:suggest_command:'/{label} multiplier set '><hover:show_text:'&7Click to write it'>&#f7c948/{label} multiplier set &7<player> <value></hover></click> &7- multiplier of a player"
+    - " <click:suggest_command:'/{label} multiplier reset '><hover:show_text:'&7Click to write it'>&#f7c948/{label} multiplier reset &7<player></hover></click> &7- back to x1"
+    - " <click:suggest_command:'/{label} multiplier global '><hover:show_text:'&7Click to write it'>&#f7c948/{label} multiplier global &7<value></hover></click> &7- whole server &8(now x{global_multiplier})"
+    - " <click:suggest_command:'/{label} multiplier check '><hover:show_text:'&7Click to write it'>&#f7c948/{label} multiplier check &7[player]</hover></click> &7- see a multiplier"
+
+admin:
+  give: "{prefix}&7Gave &#f7c948{amount_commas} &7mobcoins to &f{target}&7. &8({mobcoins_after})"
+  give-all: "{prefix}&7Gave &#f7c948{amount_commas} &7mobcoins to &f{count} &7online players."
+  remove: "{prefix}&7Removed &#f7c948{amount_commas} &7mobcoins from &f{target}&7. &8({mobcoins_after})"
+  remove-all: "{prefix}&7Removed &#f7c948{amount_commas} &7mobcoins from &f{count} &7online players."
+  set: "{prefix}&7Balance of &f{target} &7set to &#f7c948{amount_commas}&7."
+  migrate-start: "{prefix}&7Copying every balance to &f{target}&7..."
+  migrate-done: "{prefix}&7Copied &#f7c948{count} &7accounts to &f{target}&7. Set storage.type to &f{target} &7and restart to use it."
+  migrate-same: "{prefix}&7The storage is already &f{target}&7."
+  migrate-error: "{prefix}&cCould not copy the balances: &7{error}"
+
+multiplier:
+  set: "{prefix}&7Multiplier of &f{target} &7set to &#f7c948x{value}&7."
+  global: "{prefix}&7Server multiplier set to &#f7c948x{value}&7."
+  check: "{prefix}&f{target} &7has a multiplier of &#f7c948x{value} &8(server x{global_multiplier})&7."
+  received: "{prefix}&7Your mobcoins multiplier is now &#f7c948x{value}&7."
+  invalid: "{prefix}&f{input} &7is not a valid multiplier (it must be more than 0)."
+
+# Messages to the player whose balance changed
+received:
+  give: "{prefix}&7You received &#f7c948{amount_commas} &7mobcoins."
+  remove: "{prefix}&#f7c948{amount_commas} &7mobcoins were removed from your balance."
+  set: "{prefix}&7Your balance is now &#f7c948{amount_commas} &7mobcoins."
+
+pay:
+  disabled: "{prefix}&7Payments are turned off."
+  sent: "{prefix}&7You sent &#f7c948{amount_commas} &7mobcoins to &f{target}&7."
+  received: "{prefix}&f{player} &7sent you &#f7c948{amount_commas} &7mobcoins."
+  self: "{prefix}&7You can't pay yourself."
+  not-enough: "{prefix}&7You don't have &#f7c948{amount_commas} &7mobcoins &8(&7you have {mobcoins_commas}&8)&7."
+  min: "{prefix}&7You can send at least &#f7c948{min} &7mobcoins."
+  offline: "{prefix}&f{target} &7is not online."
+  cooldown: "{prefix}&7Wait &f{seconds}s &7before paying again."
+
+# /mobcoins top chat (and the console). Players get the menu: menus/top.yml
+top:
+  header:
+    - ""
+    - " <gradient:#f7b733:#fce38a><bold>TOP MOBCOINS</bold></gradient>"
+    - ""
+  line: " &#f7c948#{position} &f{name} &7- {amount_commas}"
+  empty: " &7Nobody has mobcoins yet."
+  footer: ""
+
+shop:
+  disabled: "{prefix}&7The shop is turned off."
+  not-found: "{prefix}&7There is no shop called &f{shop}&7."
+  requirements: "{prefix}&7You can't open this shop right now."
+  not-enough: "{prefix}&7You need &#f7c948{price} &7mobcoins &8(&7{missing} missing&8)&7."
+  not-enough-money: "{prefix}&7You need &#f7c948${price} &7for this."
+  not-enough-tokens: "{prefix}&7You need &#f7c948{price} &7tokens for this."
+  opened-for: "{prefix}&7Opened &f{shop} &7for &f{target}&7."
+  no-stock: "{prefix}&7This item is &csold out&7. Come back after the next rotation!"
+  bought: "{prefix}&7You bought {product} &7for &#f7c948{price} &7mobcoins."
+  no-permission-item: "{prefix}&7You can't buy {product}&7."
+  limit-reached: "{prefix}&7You can't buy {product} &7again for now."
+  sold-out: "{prefix}{product} &7is sold out."
+  price-changed: "{prefix}&7The price of {product} &7changed: check it again."
+  error: "{prefix}&cSomething went wrong, try again in a moment."
+  list-header: "{prefix}&7Shops &8({count})&7:"
+  list-line: " <click:run_command:'/{label} shop {shop}'><hover:show_text:'&7Click to open'>&8» &#f7c948{shop}</hover></click>"
+  # Broadcast when a rotating shop gets new items ("" = off). {shop} = file name of the shop
+  rotating-reset:
+    normal: "{prefix}&7The <gradient:#b3ffab:#12fff7><bold>NORMAL</bold></gradient> &7items of the &f{shop} &7shop changed!"
+    premium: "{prefix}&7The <gradient:#ff9966:#ff5e62><bold>PREMIUM</bold></gradient> &7items of the &f{shop} &7shop changed!"
+
+drops:
+  # Default message of drops.yml (when a mob has no "actions")
+  received: "&#f7c948+{amount} mobcoins"
+  menu-disabled: "{prefix}&7The drops menu is turned off."
+  none: "{prefix}&7Mobs don't give mobcoins on this server."
+
+# "Write it in chat" of the admin menus
+input:
+  hint: "{prefix}<click:suggest_command:'{current}'><hover:show_text:'&7Click to write it'>&8[&7now: &f{current}&8]</hover></click> &7Write &fcancel &7to go back."
+  cancelled: "{prefix}&7Cancelled."
+
+editor:
+  editing: "{prefix}&7Editing &f{menu}&7: move the items, &fshift + right click &7a slot for the palette, &fshift + left click &7an item for the product settings. Close the menu to save."
+  editing-rotating: "{prefix}&7Editing &f{menu}&7: move the items, &fshift + right click &7a slot for the palette, &fshift + left click &7an item for the product settings or a green / pink pane for the rotating items. Close the menu to save."
+  saved: "{prefix}&7Saved &f{menu}&7."
+  admin-only-on: "{prefix}&7Now only admins see it."
+  admin-only-off: "{prefix}&7Now everybody sees it."
+  ask-price: "{prefix}&7Write the &fprice &7in mobcoins."
+  ask-limit: "{prefix}&7Write how many times &feach player &7can buy it (0 = no limit)."
+  ask-stock: "{prefix}&7Write how many pieces there are for &fthe whole server &7(0 = no stock)."
+  ask-rotation-stock: "{prefix}&7Write how many pieces there are &fin one rotation &7(0 = no limit)."
+  ask-rotation-time: "{prefix}&7Write how often the items change, e.g. &f6h&7, &f30m&7, &f1d&7."
+  ask-permission: "{prefix}&7Write the &fpermission &7needed to buy it (none = everybody)."
+  ask-name: "{prefix}&7Write the &fname &7of the item (colors and gradients work)."
+  ask-command: "{prefix}&7Write the &fconsole command &7to run when it's bought ({player} {uuid})."
+  ask-new-menu: "{prefix}&7Write the &fname &7of the new shop (letters, numbers, - and _)."
+  new-menu: "{prefix}&7Created &fshops/{menu}.yml&7. Open it with &#f7c948/mobcoins shop {menu}&7 or link it from another menu."
+  new-menu-taken: "{prefix}&f{menu} &7is not a valid name or is already used."
+  product-created: "{prefix}&7Product created for &#f7c948{price} &7mobcoins: buyers get exactly that item."
+  empty-hand: "{prefix}&7Hold the item in your hand first."
+  delete-shift: "{prefix}&7Shift + click to delete it."
+  deleted: "{prefix}&7Deleted &f{item}&7."
+  no-rotation: "{prefix}&7This shop doesn't rotate: add a rotating slot with the palette first (&fshift + right click &7an empty slot)."
+  rotation-removed: "{prefix}&7The item is not rotating anymore: put it on a slot with the editor."
+  rotated: "{prefix}&7New items are in the shop."
+  broken: "{prefix}&cThe file of {menu} has a mistake &7(see the console): fix it and /mobcoins reload, then edit it."
+
+# Chest builder: /mobcoins layout add|import|chest|remove (build a menu in a real chest, then type one command)
+layout:
+  usage:
+    add: "{prefix}&7Use &#f7c948/{label} add <name> &7while you look at a chest with the menu in it."
+    import: "{prefix}&7Use &#f7c948/{label} import <menu> &7while you look at a chest: it replaces the decorations of the menu."
+    chest: "{prefix}&7Use &#f7c948/{label} chest <menu> &7while you look at an empty chest: the menu is put in it."
+    remove: "{prefix}&7Use &#f7c948/{label} remove <name>&7: deletes a shop (the file goes in backups/)."
+  no-container: "{prefix}&7Look at a &fchest&7, &fbarrel &7or &fshulker box &7(at most 5 blocks away)."
+  not-supported: "{prefix}&7A &f{block} &7can't be a menu: use a chest, double chest, barrel or shulker box."
+  chest-empty: "{prefix}&7The chest is empty: put the items of the menu in it first."
+  chest-not-empty: "{prefix}&7The chest must be empty: the menu is put in it."
+  chest-small: "{prefix}&7The menu has &f{rows} &7rows, the chest only &f{chest}&7: use a double chest."
+  bad-name: "{prefix}&f{name} &7is not a valid name: letters a-z, numbers and -, at most 32."
+  name-taken: "{prefix}&7There is already a menu called &f{name}&7."
+  command-taken: "{prefix}&f/{name} &7is already a command of the server: pick another name."
+  added:
+    - "{prefix}&7New menu &f{menu} &7from the chest: &f{rows} &7rows, &f{items} &7items, &f{actions} &7actions, &f{buttons} &7buttons."
+    - "{prefix}&7Saved in &f{file}&7, opened with &#f7c948/{menu}&7. Change it here, close = save."
+  imported:
+    - "{prefix}&7The chest is now the layout of &f{menu}&7: &f{rows} &7rows, &f{items} &7items, &f{actions} &7actions, &f{buttons} &7buttons."
+    - "{prefix}&7Saved in &f{file} &8(&7old file: &f{backup}&8)&7. Change it here, close = save."
+  exported: "{prefix}&f{menu} &7is in the chest: &f{items} &7items in &f{rows} &7rows. Change it and &#f7c948/mobcoins layout import {menu}&7."
+  unknown-buttons: "{prefix}&7No item of the menu is called &f{buttons}&7: those [button] lines were skipped."
+  outside: "{prefix}&7Outside the new size: &f{items} &7(they come back if the menu gets bigger)."
+  remove-confirm: "{prefix}&7Delete the shop &f{menu}&7? <click:run_command:'/{label} remove {menu} confirm'><hover:show_text:'&7Click to delete it (the file goes in backups/)'>&c&n[Delete]</hover></click> &8(30 seconds)"
+  removed: "{prefix}&7Shop &f{menu} &7deleted. Old file: &f{backup}&7."
+  remove-failed: "{prefix}&cCould not delete {menu}: see the console."
+  remove-builtin: "{prefix}&f{menu} &7is a menu of the plugin: turn it off with &#f7c948enabled: false &7instead."
+  remove-main: "{prefix}&f{menu} &7is the main shop &8(shop.main-shop)&7: pick another main shop first."
+
+settings:
+  changed: "{prefix}&f{option} &7is now &f{value}&7."
+  ask-first-join: "{prefix}&7Write the mobcoins given on the &ffirst join&7."
+  ask-pay-min: "{prefix}&7Write the &fminimum &7amount of /mobcoins pay."
+  ask-pay-cooldown: "{prefix}&7Write the &fseconds &7between two payments."
+  ask-confirm-above: "{prefix}&7Products that cost &fat least &7this much ask a confirmation (0 = only confirm: true)."
+  ask-global-multiplier: "{prefix}&7Write the &fserver multiplier &7of the mob drops (1 = normal, 2 = double)."
+  ask-main-shop: "{prefix}&7Write the &fshop &7opened by /mobcoins shop."

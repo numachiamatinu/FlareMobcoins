@@ -1,0 +1,72 @@
+#  Flare Mobcoins · menu 'drops' (/mobcoins drops: what every mob of drops.yml gives)
+#  In-game: /mobcoins editor drops   (drag & drop · close = save)
+#
+#  enabled         false = menu off for everyone
+#  rows            size of the menu: 1-6 rows (9-54 slots)
+#  open-commands   [mobdrops] → /mobdrops opens it   ·   open-permission: "" = everyone
+#  slots           "4"  "19-25"  "0-8,45-53"   (row 1 = 0-8, row 2 = 9-17 ...)
+#  material        DIAMOND · head:{player} · head:Notch · texture:<minecraft-heads value>
+#  admin-only      true = players don't see it
+#  actions         [close] [back] [open] <menu> [player] cmd [console] cmd [message] text [sound] key
+#  entries         one slot per drop (more drops = pages, previous / next change the page)
+#                  no material = the spawn egg of the mob or a head (icon: in drops.yml changes it)
+#  Placeholders    entries: {name} {entities} {chance} {value} {entity}
+#
+#  ── Format ──────────────────────────────────────────────
+#  Colors    &a &c &e &f &7 ...   &l bold  &o italic  &n underline
+#  Hex       "&#f7c948Text"   Gradient "<gradient:#f7b733:#fce38a>Text</gradient>"   Rainbow "<rainbow>Text</rainbow>"
+#  Tip       always write texts between "quotes"
+
+enabled: true
+title: "<gradient:#f7b733:#fce38a><bold>MOB DROPS</bold></gradient>"
+rows: 6
+open-commands: []
+open-permission: ""
+elements:
+  entries:
+    slots: "10-16,19-25,28-34,37-43"
+    admin-only: false
+    name: "<gradient:#f7b733:#fce38a><bold>{name}</bold></gradient>"
+    lore:
+      - "&7Mobs: &f{entities}"
+      - ""
+      - "&7Chance: &#f7c948{chance}%"
+      - "&7MobCoins: &#f7c948{value}"
+  previous:
+    slots: "48"
+    admin-only: false
+    material: "ARROW"
+    name: "&#f7c948← Previous page"
+    lore: []
+  close:
+    slots: "49"
+    admin-only: false
+    material: "BARRIER"
+    name: "&cClose"
+    lore: []
+  next:
+    slots: "50"
+    admin-only: false
+    material: "ARROW"
+    name: "&#f7c948Next page →"
+    lore: []
+decorations:
+  - slots: "0-9,17,18,26,27,35,36,44-47,51-53"
+    material: "YELLOW_STAINED_GLASS_PANE"
+    name: " "
+    lore: []
+    glow: false
+    admin-only: false
+    actions: []
+
+# ── Texts of this menu ──
+texts:
+  range-format: "{min} - {max}"
+  groups:
+    all: "every mob"
+    hostile: "hostile mobs"
+    passive: "passive mobs"
+  empty:
+    material: "BARRIER"
+    name: "&7Mobs don't give mobcoins here"
+    lore: []

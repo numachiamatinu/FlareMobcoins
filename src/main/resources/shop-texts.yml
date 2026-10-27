@@ -1,0 +1,29 @@
+# Default texts of the shops (each shop can change them in its own "texts" section).
+texts:
+  product:
+    info:
+      - ""
+      - "&7Price: &#f7c948{price} mobcoins"
+    limit:
+      - "&7Bought: &f{bought}&7/&f{limit}"
+    stock:
+      - "&7Left: &f{stock_left}&7/&f{stock}"
+    rotating-stock:
+      - "&7Stock: &f{stock}&7/&f{max_stock}"
+    rotating-player-stock:
+      - "&7You can buy it &f{stock} &7more times"
+    can-buy:
+      - ""
+      - "&#f7c948Click to buy"
+    not-enough:
+      - ""
+      - "&cYou need &f{missing} &cmore mobcoins"
+    no-permission:
+      - ""
+      - "&cYou can't buy this"
+    limit-reached:
+      - ""
+      - "&cYou already bought this"
+    sold-out:
+      - ""
+      - "&cSold out"

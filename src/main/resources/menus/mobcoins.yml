@@ -1,0 +1,77 @@
+#  Flare Mobcoins · menu 'mobcoins' (/mobcoins menu)
+#  In-game: /mobcoins editor mobcoins   (drag & drop · close = save)
+#
+#  enabled         false = menu off for everyone
+#  rows            size of the menu: 1-6 rows (9-54 slots)
+#  open-commands   [mobmenu] → /mobmenu opens it   ·   open-permission: "" = everyone
+#  slots           "4"  "19-25"  "0-8,45-53"   (row 1 = 0-8, row 2 = 9-17 ...)
+#  material        DIAMOND · head:{player} · head:Notch · texture:<minecraft-heads value>
+#  admin-only      true = players don't see it
+#  actions         [close] [back] [open] <menu> [player] cmd [console] cmd [message] text [sound] key
+#                  shop, drops, top and close work without actions (they open the menu of their name)
+#  Placeholders    {player} {mobcoins} {mobcoins_formatted} {mobcoins_commas} {multiplier}
+#                  {global_multiplier} and PlaceholderAPI
+#
+#  ── Format ──────────────────────────────────────────────
+#  Colors    &a &c &e &f &7 ...   &l bold  &o italic  &n underline
+#  Hex       "&#f7c948Text"   Gradient "<gradient:#f7b733:#fce38a>Text</gradient>"   Rainbow "<rainbow>Text</rainbow>"
+#  Tip       always write texts between "quotes"
+
+enabled: true
+title: "<gradient:#f7b733:#fce38a><bold>MOBCOINS</bold></gradient>"
+rows: 3
+open-commands: []
+open-permission: ""
+elements:
+  balance:
+    slots: "10"
+    admin-only: false
+    material: "head:{player}"
+    name: "&f{player}"
+    lore:
+      - "&7Balance: &#f7c948{mobcoins_commas} mobcoins"
+      - "&7Multiplier: &fx{multiplier}"
+      - ""
+      - "&7Kill mobs to get more!"
+    update: true
+  shop:
+    slots: "12"
+    admin-only: false
+    material: "EMERALD"
+    name: "&#f7c948Shop"
+    lore:
+      - "&7Spend your mobcoins"
+      - ""
+      - "&#f7c948Click to open"
+  drops:
+    slots: "14"
+    admin-only: false
+    material: "ROTTEN_FLESH"
+    name: "&#f7c948Mob drops"
+    lore:
+      - "&7How many mobcoins every mob gives"
+      - ""
+      - "&#f7c948Click to open"
+  top:
+    slots: "16"
+    admin-only: false
+    material: "KNOWLEDGE_BOOK"
+    name: "&#f7c948Top players"
+    lore:
+      - "&7Who has the most mobcoins"
+      - ""
+      - "&#f7c948Click to open"
+  close:
+    slots: "22"
+    admin-only: false
+    material: "BARRIER"
+    name: "&cClose"
+    lore: []
+decorations:
+  - slots: "0-9,17-21,23-26"
+    material: "YELLOW_STAINED_GLASS_PANE"
+    name: " "
+    lore: []
+    glow: false
+    admin-only: false
+    actions: []

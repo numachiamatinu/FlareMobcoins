@@ -1,0 +1,109 @@
+name: FlareMobcoins
+version: '${project.version}'
+main: dev.tmdevelopment.flaremobcoins.FlareMobcoins
+api-version: '1.13'
+author: TMDevelopment
+description: MobCoins from killing mobs, with shops, rotating shops, multipliers and PlaceholderAPI support.
+softdepend: [PlaceholderAPI, Vault, FlareTokens, ItemsAdder, ExecutableItems, RoseStacker, WildStacker]
+
+commands:
+  mobcoins:
+    description: FlareMobcoins main command
+    # fmob, fmobcoin, fmobcoins, mobcoin + the 3.x names (mcoins, flaremobcoins, tmmobcoins)
+    aliases: [fmob, fmobcoin, fmobcoins, mobcoin, mcoins, flaremobcoins, tmmobcoins]
+    usage: /mobcoins help
+
+permissions:
+  flaremobcoins.player:
+    description: Every player command (balance, pay, menu, shop, drops, top)
+    default: true
+    children:
+      flaremobcoins.command.help: true
+      flaremobcoins.command.balance: true
+      flaremobcoins.command.pay: true
+      flaremobcoins.command.menu: true
+      flaremobcoins.command.shop: true
+      flaremobcoins.command.drops: true
+      flaremobcoins.command.top: true
+  flaremobcoins.admin:
+    description: Every command (give, remove, set, multiplier, settings, editor, layout, reload, migrate, about, balance of others, shop for others)
+    default: op
+    children:
+      flaremobcoins.player: true
+      flaremobcoins.command.balance.others: true
+      flaremobcoins.command.balance.other: true
+      flaremobcoins.command.shop.others: true
+      flaremobcoins.command.drops.other: true
+      flaremobcoins.command.give: true
+      flaremobcoins.command.remove: true
+      flaremobcoins.command.set: true
+      flaremobcoins.command.multiplier: true
+      flaremobcoins.command.reload: true
+      flaremobcoins.command.migrate: true
+      flaremobcoins.command.version: true
+      flaremobcoins.command.settings: true
+      flaremobcoins.command.editor: true
+      flaremobcoins.bypass.cooldown: true
+  flaremobcoins.command.help:
+    description: /mobcoins help
+    default: true
+  flaremobcoins.command.balance:
+    description: "/mobcoins and /mobcoins balance: your balance"
+    default: true
+  flaremobcoins.command.pay:
+    description: "/mobcoins pay: send mobcoins to another player"
+    default: true
+  flaremobcoins.command.menu:
+    description: "/mobcoins menu: your mobcoins menu"
+    default: true
+  flaremobcoins.command.shop:
+    description: "/mobcoins shop: open the shops"
+    default: true
+  flaremobcoins.command.drops:
+    description: "/mobcoins drops: mobcoins of every mob"
+    default: true
+  flaremobcoins.command.top:
+    description: "/mobcoins top: richest players"
+    default: true
+  flaremobcoins.command.balance.others:
+    description: "/mobcoins balance <player>: balance of other players"
+    default: op
+  flaremobcoins.command.balance.other:
+    description: 3.x name of flaremobcoins.command.balance.others
+    default: op
+  flaremobcoins.command.shop.others:
+    description: "/mobcoins shop <shop> <player>: open a shop for another player"
+    default: op
+  flaremobcoins.command.drops.other:
+    description: "/mobcoins drops <player>: open the drops menu for another player"
+    default: op
+  flaremobcoins.command.give:
+    description: /mobcoins give
+    default: op
+  flaremobcoins.command.remove:
+    description: /mobcoins remove
+    default: op
+  flaremobcoins.command.set:
+    description: /mobcoins set
+    default: op
+  flaremobcoins.command.multiplier:
+    description: "/mobcoins multiplier: player and server multipliers"
+    default: op
+  flaremobcoins.command.reload:
+    description: /mobcoins reload
+    default: op
+  flaremobcoins.command.migrate:
+    description: "/mobcoins migrate: copy all balances to another storage"
+    default: op
+  flaremobcoins.command.version:
+    description: "/mobcoins about (also /mobcoins version): plugin info and update check"
+    default: op
+  flaremobcoins.command.settings:
+    description: "/mobcoins settings: every option in a menu"
+    default: op
+  flaremobcoins.command.editor:
+    description: "/mobcoins editor: edit menus and shops in game"
+    default: op
+  flaremobcoins.bypass.cooldown:
+    description: "No wait between two payments (pay.cooldown-seconds)"
+    default: op

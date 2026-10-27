@@ -1,0 +1,72 @@
+#  Flare Mobcoins · drops.yml · mobcoins for killing mobs
+#  After editing: /mobcoins reload      Players see the list with /mobcoins drops
+#
+#  Only kills made by a player count (also with bows, tridents...).
+#
+#  Each entry is a mob name (ZOMBIE, SKELETON, CREEPER ... names of this Minecraft version) or a group:
+#    HOSTILE every hostile mob · PASSIVE every other mob · DEFAULT (or ALL) every mob not in the list
+#  An entry with any name can also choose its mobs like in 3.x:  entity: ZOMBIE / HOSTILE  or  entities: [HUSK, DROWNED]
+#  A mob uses the most precise entry: its own name first, then HOSTILE / PASSIVE, then DEFAULT.
+#
+#    chance        percent of kills that give mobcoins (100 = always). 3.x name: drop_chance
+#    amount        "5" fixed · "2.5" with decimals · "1-10" random · "random_decimal(1,2)" random with decimals
+#                  3.x name: drop_value
+#    actions       optional: what happens when mobcoins drop ({amount} = mobcoins). Without it: action bar
+#                  message from lang/en.yml > drops.received. Same actions as the shops. 3.x name: drop_action
+#    give          false = don't give the mobcoins automatically (only run the actions). The mobcoins are given
+#                  by the plugin, don't add [mobcoins_give] to "actions". Only the 3.x drop_action works the old way:
+#                  it gives nothing by itself, its lines use [mobcoins_give] %pl_mobcoins%
+#    requirements  optional checks the killer must pass, e.g. ["[has_permission] mobcoins.drops"]
+#    icon          optional: item shown in /mobcoins drops
+#
+#  The amount is multiplied by: the player multiplier (/mobcoins multiplier) × the global multiplier
+#  × the best permission multiplier below.
+
+enabled: true
+
+# Mobs from spawners give nothing
+ignore-spawner-mobs: false
+# Worlds where mobs give nothing
+disabled-worlds:
+  - "world_example"
+# RoseStacker / WildStacker: multiply by the number of mobs in the stack. Turn it on only if
+# your stacker kills the whole stack at once.
+stackers: false
+
+# Multiply the drop for players with a permission (the highest one counts)
+multipliers:
+  flaremobcoins.multiplier.vip: 1.5
+  flaremobcoins.multiplier.mvp: 2
+
+entity:
+  ZOMBIE:
+    chance: 100
+    amount: "1-2"
+  SKELETON:
+    chance: 100
+    amount: "1-2"
+  SPIDER:
+    chance: 80
+    amount: "1-2"
+  CREEPER:
+    chance: 100
+    amount: "2-3"
+  ENDERMAN:
+    chance: 100
+    amount: "3-5"
+    actions:
+      - "[ACTIONBAR] &#f7c948+{amount} mobcoins &7from an enderman"
+      - "[SOUND] ENTITY_EXPERIENCE_ORB_PICKUP 1 1.5"
+  WITHER:
+    chance: 100
+    amount: "100-200"
+    actions:
+      - "[BROADCAST] {prefix}&f{player} &7killed a wither and got &#f7c948{amount} &7mobcoins!"
+  # Every other hostile mob
+  HOSTILE:
+    chance: 50
+    amount: "random_decimal(0.5,1)"
+  # Animals and other mobs
+  PASSIVE:
+    chance: 25
+    amount: "0.5"
