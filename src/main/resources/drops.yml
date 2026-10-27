@@ -33,7 +33,8 @@ disabled-worlds:
 # your stacker kills the whole stack at once.
 stackers: false
 
-# Multiply the drop for players with a permission (the highest one counts)
+# Multiply the drop for players with a permission (the highest one counts).
+# Give it with your permissions plugin: OPs don't get it by themselves.
 multipliers:
   flaremobcoins.multiplier.vip: 1.5
   flaremobcoins.multiplier.mvp: 2

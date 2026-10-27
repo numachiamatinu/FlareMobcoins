@@ -45,6 +45,8 @@ public final class MenuManager {
     private final Map<String, MenuDef> builtins = new LinkedHashMap<>();
     private final Map<UUID, MenuSession> open = new ConcurrentHashMap<>();
     private final List<Command> registered = new ArrayList<>();
+    /** Open commands in use now: command -> menu. Paper keeps old commands until a restart, they check this. */
+    private final Map<String, String> active = new ConcurrentHashMap<>();
     private BukkitTask ticker;
     private BukkitTask rotationTicker;
     private YamlConfiguration shopTexts;
@@ -209,6 +211,19 @@ public final class MenuManager {
 
     /** Saves with the explanations of the file in the jar on top. */
     void save(File f, String resource, YamlConfiguration y) {
+        // only what changed is written: comments, quotes and layout of the file stay as they are
+        if (f.isFile()) {
+            try {
+                String old = new String(java.nio.file.Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8);
+                String patched = dev.tmdevelopment.flaremobcoins.config.YamlKeeper.patch(old, y);
+                if (patched != null) {
+                    if (!patched.equals(old.replace("\r\n", "\n"))) J8.write(f.toPath(), patched, StandardCharsets.UTF_8);
+                    return;
+                }
+            } catch (Exception ignored) {
+                // written again below
+            }
+        }
         String header = Headers.of(plugin, resource);
         String body = Headers.split(y.saveToString())[1];
         try {
@@ -379,7 +394,7 @@ public final class MenuManager {
             return false;
         }
         if (!def.enabled && !admin) {
-            plugin.lang().send(player, def.builtin && def.id.equals(Builtins.DROPS) ? "drops.menu-disabled" : "shop.disabled");
+            plugin.lang().send(player, !def.builtin ? "shop.disabled" : def.id.equals(Builtins.DROPS) ? "drops.menu-disabled" : "shop.menu-disabled");
             return false;
         }
         if (check && !gate(player, def)) return false;
@@ -500,7 +515,12 @@ public final class MenuManager {
         for (String c : mainCommands) put(commands, c, mainShop());
         for (MenuDef d : shops.values()) for (String c : d.openCommands()) put(commands, c, d.id());
         for (MenuDef d : builtins.values()) for (String c : d.openCommands()) put(commands, c, d.id());
-        if (commands.isEmpty()) return;
+        active.clear();
+        active.putAll(commands);
+        if (commands.isEmpty()) {
+            Compat.syncCommands();
+            return;
+        }
         for (Map.Entry<String, String> e : commands.entrySet()) {
             String name = e.getKey();
             String target = e.getValue();
@@ -511,7 +531,13 @@ public final class MenuManager {
                         plugin.lang().send(sender, "general.players-only");
                         return true;
                     }
-                    open((Player) sender, target, true);
+                    String now = active.get(name);
+                    if (now == null) {
+                        // the menu was removed: answer like an unknown command
+                        sender.sendMessage(unknownCommand());
+                        return true;
+                    }
+                    open((Player) sender, now, true);
                     return true;
                 }
             };
@@ -523,6 +549,15 @@ public final class MenuManager {
             }
         }
         Compat.syncCommands();
+    }
+
+    private static String unknownCommand() {
+        try {
+            String m = Bukkit.spigot().getConfig().getString("messages.unknown-command");
+            if (m != null) return org.bukkit.ChatColor.translateAlternateColorCodes('&', m);
+        } catch (Throwable ignored) {
+        }
+        return "Unknown command. Type \"/help\" for help.";
     }
 
     private static void put(Map<String, String> map, String command, String target) {

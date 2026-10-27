@@ -154,6 +154,7 @@ top:
 
 shop:
   disabled: "{prefix}&7The shop is turned off."
+  menu-disabled: "{prefix}&7This menu is turned off."
   not-found: "{prefix}&7There is no shop called &f{shop}&7."
   requirements: "{prefix}&7You can't open this shop right now."
   not-enough: "{prefix}&7You need &#f7c948{price} &7mobcoins &8(&7{missing} missing&8)&7."

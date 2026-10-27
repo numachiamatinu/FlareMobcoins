@@ -27,7 +27,9 @@ public final class SettingsMenu extends Gui {
         if (ConfigWriter.set(plugin, file, path, !now)) {
             if (file.equals("drops.yml")) plugin.drops().load();
             else plugin.applyConfig();
-            lang().send(viewer, "settings.changed", "{option}", path, "{value}", lang().raw(!now ? "gui.common.enabled" : "gui.common.disabled"));
+            // options of drops.yml say so: "enabled" alone looks like the whole plugin
+            String option = file.equals("config.yml") ? path : file + " > " + path;
+            lang().send(viewer, "settings.changed", "{option}", option, "{value}", lang().raw(!now ? "gui.common.enabled" : "gui.common.disabled"));
         }
         refresh();
     }
@@ -42,7 +44,7 @@ public final class SettingsMenu extends Gui {
                 Object value = decimals ? (Object) Num.round(v) : (Object) (long) v;
                 if (ConfigWriter.set(plugin, "config.yml", path, value)) {
                     plugin.applyConfig();
-                    lang().send(viewer, "settings.changed", "{option}", path, "{value}", String.valueOf(value));
+                    lang().send(viewer, "settings.changed", "{option}", path, "{value}", Num.plain(((Number) value).doubleValue()));
                 }
             }
             openLater();
@@ -102,7 +104,10 @@ public final class SettingsMenu extends Gui {
                 e -> plugin.chatInput().ask(viewer, "settings.ask-main-shop", plugin.menus().mainShop(), text -> {
                     String name = text.trim();
                     if (plugin.menus().get(name) == null) lang().send(viewer, "shop.not-found", "{shop}", name);
-                    else if (ConfigWriter.set(plugin, "config.yml", "shop.main-shop", name)) plugin.applyConfig();
+                    else if (ConfigWriter.set(plugin, "config.yml", "shop.main-shop", name)) {
+                        plugin.applyConfig();
+                        lang().send(viewer, "settings.changed", "{option}", "shop.main-shop", "{value}", name);
+                    }
                     openLater();
                 }, this::openLater));
         set(30, button("PAINTING", "gui.settings.menus", "{shops}", String.valueOf(plugin.menus().size())),

@@ -38,7 +38,7 @@ import java.util.concurrent.CompletableFuture;
 public final class MobcoinsCommand implements CommandExecutor, TabCompleter, Listener {
 
     private static final List<String> SUBS = Arrays.asList("help", "balance", "pay", "menu", "shop", "drops", "top", "give",
-            "remove", "set", "multiplier", "settings", "editor", "reload", "migrate", "about", "version");
+            "remove", "set", "multiplier", "settings", "editor", "layout", "reload", "migrate", "about", "version");
     private final FlareMobcoins plugin;
     private final Map<UUID, Long> payCooldown = new HashMap<>();
     private final Map<UUID, Long> lastLookup = new HashMap<>();
@@ -368,6 +368,11 @@ public final class MobcoinsCommand implements CommandExecutor, TabCompleter, Lis
             lang().send(sender, "general.no-permission");
             return;
         }
+        if (forOther && plugin.menus().def(shop) == null) {
+            // the error goes to who wrote the command, not to the player
+            lang().send(sender, "shop.not-found", "{shop}", shop);
+            return;
+        }
         boolean opened = plugin.menus().open(target, shop, !forOther);
         if (opened && forOther) lang().send(sender, "shop.opened-for", "{shop}", shop, "{target}", target.getName());
     }
@@ -406,6 +411,14 @@ public final class MobcoinsCommand implements CommandExecutor, TabCompleter, Lis
             lang().send(sender, "general.no-permission");
             return;
         }
+        // the list is read again first (new balances show at once, not at the next refresh)
+        coins().refreshTopThen(() -> {
+            if (sender instanceof Player && !((Player) sender).isOnline()) return;
+            showTop(sender, label, args);
+        });
+    }
+
+    private void showTop(CommandSender sender, String label, String[] args) {
         // players get the menu (menus/top.yml), "/mobcoins top chat" and the console the chat list
         if (sender instanceof Player && (args.length < 2 || !args[1].equalsIgnoreCase("chat"))) {
             MenuDef menu = plugin.menus().builtin("top");
@@ -469,6 +482,7 @@ public final class MobcoinsCommand implements CommandExecutor, TabCompleter, Lis
                 return;
             }
             String name = nameOf(acc, who);
+            double before = coins().isLoaded(acc.uuid) ? coins().balance(acc.uuid) : acc.mobcoins;
             CompletableFuture<Double> f;
             if (what.equals("give")) f = coins().give(acc.uuid, name, amount, cause);
             else if (what.equals("remove")) f = coins().take(acc.uuid, name, amount, false, cause);
@@ -478,12 +492,14 @@ public final class MobcoinsCommand implements CommandExecutor, TabCompleter, Lis
                     lang().send(sender, "general.cancelled");
                     return;
                 }
-                lang().send(sender, "admin." + what, join(amountPairs(amount), "{target}", name,
+                // remove: what was really taken (he may have had less)
+                double shown = what.equals("remove") ? Num.round(Math.max(0, Math.min(amount, before - Math.max(0, after)))) : amount;
+                lang().send(sender, "admin." + what, join(amountPairs(shown), "{target}", name,
                         "{mobcoins_after}", Num.commas(Math.max(0, after))));
                 Player online = Bukkit.getPlayer(acc.uuid);
                 boolean self = sender instanceof Player && ((Player) sender).getUniqueId().equals(acc.uuid);
                 if (online != null && !silent && !(self && what.equals("set"))) {
-                    notify(online, what, what.equals("set") ? Math.max(0, after) : amount);
+                    notify(online, what, what.equals("set") ? Math.max(0, after) : shown);
                 }
             });
         });
@@ -720,7 +736,7 @@ public final class MobcoinsCommand implements CommandExecutor, TabCompleter, Lis
         if (args.length == 1) {
             List<String> out = new ArrayList<>();
             for (String s : SUBS) {
-                String need = s.equals("about") ? "version" : s;
+                String need = s.equals("about") ? "version" : s.equals("layout") ? "editor" : s;
                 if ((s.equals("help") || allowed(sender, need)) && s.startsWith(args[0].toLowerCase(Locale.ROOT))) out.add(s);
             }
             return out;

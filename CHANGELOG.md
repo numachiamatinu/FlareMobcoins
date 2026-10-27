@@ -2,6 +2,33 @@
 
 Versions go up by one step for every update: 4.0.1, 4.0.2, 4.0.3...
 
+## 4.0.1
+
+### Fixed
+- **Permission multipliers were given to every OP.** `flaremobcoins.multiplier.vip` / `mvp` (and every multiplier of
+  `drops.yml`) are not plugin.yml permissions, and Bukkit gives undeclared permissions to OPs: OPs got the highest
+  multiplier on every drop. Now a multiplier counts only when the permission is really given (permissions plugin,
+  `*` included).
+- Saving from `/mobcoins editor` (and the chest builder) wrote the whole shop file again: quotes, lists and long lines
+  changed, and on 1.8 - 1.17 the comments inside the file were lost. Now only the values that changed are written,
+  everything else stays as you wrote it.
+- `/mobcoins settings` wrote whole numbers as `500.0` and removed a comment at the end of the line: now `500`, and the
+  comment stays.
+- `layout` was missing in the tab completion.
+- PlaceholderAPI balance placeholders gave 0 for offline players with SQLite / MySQL: they are now read in the
+  background (refreshed every minute), the server never waits.
+- After `/mobcoins layout remove <name>` the command `/<name>` kept answering "no shop called ..." until a restart
+  (Paper): now it answers like an unknown command.
+- `/mobcoins shop <shop> <player>` from the console with a wrong shop sent the error to the player instead of the console.
+- `/mobcoins remove` said "Removed 99,999,999" when the player had less: it now shows what was really removed.
+- `/mobcoins top` showed new balances only after the next refresh (60 seconds): the list is read again when it is opened.
+
+### Improved
+- Toggles of `drops.yml` in the settings menu say so in chat (`drops.yml > enabled is now ...`).
+- Setting the main shop to the one it already is gives a confirmation too.
+- A plugin menu turned off says "This menu is turned off." (it said "The shop is turned off.").
+- The startup banner says "PlaceholderAPI: downloading..." while auto-install is getting it.
+
 ## 4.0.0
 Rebuilt from scratch on the Flare base (same as FlareTokens 4 and FlareReferrals).
 

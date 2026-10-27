@@ -195,7 +195,8 @@ public final class Drops implements Listener {
         double amount = Num.roll(drop.amount);
         double best = 1;
         for (Map.Entry<String, Double> m : multipliers.entrySet()) {
-            if (m.getValue() > best && killer.hasPermission(m.getKey())) best = m.getValue();
+            // only when the permission is really given: Bukkit gives every undeclared permission to OPs
+            if (m.getValue() > best && killer.isPermissionSet(m.getKey()) && killer.hasPermission(m.getKey())) best = m.getValue();
         }
         amount *= best * plugin.coins().multiplier(killer.getUniqueId()) * plugin.coins().globalMultiplier();
         if (stackers) amount *= Stackers.size(mob);

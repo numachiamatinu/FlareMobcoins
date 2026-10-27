@@ -51,6 +51,10 @@ public final class CoinManager {
     private final Map<UUID, Double> multipliers = new ConcurrentHashMap<>();
     /** Bumped on every local change: a value read from the database before the change is ignored. */
     private final Map<UUID, Integer> versions = new ConcurrentHashMap<>();
+    /** Offline players (SQLite / MySQL): {balance, multiplier, time read}, read in the background for the placeholders. */
+    private final Map<UUID, double[]> offline = new ConcurrentHashMap<>();
+    private final java.util.Set<UUID> offlineLoading = ConcurrentHashMap.newKeySet();
+    private static final long OFFLINE_FRESH_MS = 60_000L;
     private volatile List<Storage.Account> top = Collections.emptyList();
     private final AtomicBoolean topPending = new AtomicBoolean();
     private volatile long topTime;
@@ -133,6 +137,7 @@ public final class CoinManager {
             double coins = acc == null ? 0 : acc.mobcoins;
             double mult = acc == null ? 1 : acc.multiplier;
             if (created) log("CREATE", name, startBalance, coins, "first join");
+            if (created) refreshTop(true);
             sync(() -> {
                 Player online = Bukkit.getPlayer(id);
                 if (online == null) return;
@@ -179,7 +184,10 @@ public final class CoinManager {
 
     // ------------------------------------------------------------------ reading
 
-    /** Balance in memory (online players; every player with yaml). 0 if unknown. */
+    /**
+     * Balance in memory (online players; every player with yaml). Offline players with SQLite / MySQL: the last value
+     * read, refreshed in the background at most every minute (0 until the first read is done). Never waits.
+     */
     public double balance(UUID id) {
         Double v = cache.get(id);
         if (v != null) return v;
@@ -187,7 +195,30 @@ public final class CoinManager {
             Double y = ((YamlStorage) storage).balance(id);
             return y == null ? 0 : y;
         }
-        return 0;
+        return offline(id)[0];
+    }
+
+    private double[] offline(UUID id) {
+        double[] v = offline.get(id);
+        long now = System.currentTimeMillis();
+        if ((v == null || now - (long) v[2] > OFFLINE_FRESH_MS) && offlineLoading.add(id)) {
+            if (offline.size() > 5000) offline.clear();
+            try {
+                db.submit(() -> {
+                    try {
+                        Storage.Account a = storage.get(id);
+                        offline.put(id, new double[]{a == null ? 0 : a.mobcoins, a == null ? 1 : a.multiplier, System.currentTimeMillis()});
+                    } catch (Throwable ignored) {
+                        // tried again at the next request
+                    } finally {
+                        offlineLoading.remove(id);
+                    }
+                });
+            } catch (RejectedExecutionException e) {
+                offlineLoading.remove(id);
+            }
+        }
+        return v == null ? new double[]{0, 1, 0} : v;
     }
 
     /** Waits (max 3 seconds) for an offline balance: only for old API calls. */
@@ -222,7 +253,7 @@ public final class CoinManager {
             Double y = ((YamlStorage) storage).multiplier(id);
             return y == null ? 1 : y;
         }
-        return 1;
+        return offline(id)[1];
     }
 
     public CompletableFuture<Double> fetchMultiplier(UUID id) {
@@ -397,6 +428,7 @@ public final class CoinManager {
     }
 
     private void bump(UUID id) {
+        offline.remove(id);
         if (versions.containsKey(id) || Bukkit.getPlayer(id) != null) versions.merge(id, 1, Integer::sum);
     }
 
@@ -436,6 +468,30 @@ public final class CoinManager {
         refreshTop(false);
     }
 
+    /** Refreshes the top list now (at most every 5 seconds) and runs {@code then} on the main thread when it is done. */
+    public void refreshTopThen(Runnable then) {
+        if (System.currentTimeMillis() - topTime < 5000 || !topPending.compareAndSet(false, true)) {
+            then.run();
+            return;
+        }
+        topTime = System.currentTimeMillis();
+        int size = Math.max(10, plugin.getConfig().getInt("top.size", 10));
+        async(() -> {
+            try {
+                try {
+                    storage.flush();
+                } catch (Throwable ignored) {
+                }
+                List<Storage.Account> list = storage.top(size);
+                accounts = storage.count();
+                top = Collections.unmodifiableList(new ArrayList<>(list));
+            } finally {
+                topPending.set(false);
+                sync(then);
+            }
+        });
+    }
+
     public void refreshTop(boolean force) {
         if (!force && System.currentTimeMillis() - topTime < 5000) return;
         if (!topPending.compareAndSet(false, true)) return;
@@ -449,6 +505,10 @@ public final class CoinManager {
                 }
                 List<Storage.Account> list = storage.top(size);
                 accounts = storage.count();
+                long now = System.currentTimeMillis();
+                for (Storage.Account a : list) {
+                    if (a.uuid != null && !cache.containsKey(a.uuid)) offline.put(a.uuid, new double[]{a.mobcoins, a.multiplier, now});
+                }
                 top = Collections.unmodifiableList(new ArrayList<>(list));
             } finally {
                 topPending.set(false);

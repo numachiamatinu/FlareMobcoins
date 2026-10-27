@@ -269,11 +269,18 @@ public final class FlareMobcoins extends JavaPlugin {
                 "<gray>  Shops: <white>" + menus.size() + " <dark_gray>| <gray>Drops: "
                         + (drops.enabled() ? "<green>" + drops.size() : "<white>off")
                         + " <dark_gray>| <gray>Coins on ground: " + (groundCoins.enabled() ? "<green>on" : "<white>off"),
-                "<gray>  PlaceholderAPI: " + (papi ? "<green>hooked" : "<red>not found") + " <dark_gray>| <gray>Vault: "
+                "<gray>  PlaceholderAPI: " + (papi ? "<green>hooked" : papiDownload() ? "<yellow>downloading..." : "<red>not found") + " <dark_gray>| <gray>Vault: "
                         + (vault ? "<green>found" : "<red>not found"),
                 "<gray>  Enabled in <white>" + ms + "ms",
                 ""};
         for (String l : lines) Bukkit.getConsoleSender().sendMessage(Text.console(l));
+    }
+
+    /** PlaceholderAPI is missing but auto-install is getting it (the banner says so instead of "not found"). */
+    private boolean papiDownload() {
+        return getConfig().getBoolean("auto-install.enabled", true)
+                && getConfig().getBoolean("auto-install.plugins.PlaceholderAPI.enabled", true)
+                && getConfig().isConfigurationSection("auto-install.plugins.PlaceholderAPI");
     }
 
     public Lang lang() {
