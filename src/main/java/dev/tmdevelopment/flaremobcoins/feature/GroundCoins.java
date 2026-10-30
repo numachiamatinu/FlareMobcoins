@@ -156,6 +156,7 @@ public final class GroundCoins implements Listener {
         if (coins.remove(entity.getUniqueId()) == null) return;
         entity.remove();
         Actions.run(p, pickupActions, new Actions.Context("drop coin", null, pairs(coin.amount)));
+        plugin.drops().pickedUp(p, coin.amount);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

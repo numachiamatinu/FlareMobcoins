@@ -47,26 +47,29 @@ final class Builtins {
         List<Integer> slots = item.slots;
         if (slots.isEmpty()) return;
         if (s.def.id.equals(TOP)) {
-            List<Storage.Account> top = FlareMobcoins.get().coins().top();
+            FlareMobcoins plugin = FlareMobcoins.get();
+            List<Storage.Account> top = s.topMode.equals("weekly") ? plugin.stats().weekly()
+                    : s.topMode.equals("monthly") ? plugin.stats().monthly() : plugin.coins().top();
+            String mode = s.def.text("modes." + s.topMode, s.topMode.equals("balance") ? "MobCoins" : "Earned");
             int n = Math.min(slots.size(), top.size());
             for (int i = 0; i < n; i++) {
                 Storage.Account a = top.get(i);
                 String name = a.name == null || a.name.isEmpty() ? "?" : a.name;
                 String[] pairs = {"{position}", String.valueOf(i + 1), "{name}", name, "{amount}", Num.plain(a.mobcoins),
-                        "{amount_commas}", Num.commas(a.mobcoins), "{amount_formatted}", Num.shortFormat(a.mobcoins)};
+                        "{amount_commas}", Num.commas(a.mobcoins), "{amount_formatted}", Num.shortFormat(a.mobcoins), "{mode}", mode};
                 s.set(slots.get(i), s.build(withMaterial(item, "head:" + name), slots.get(i), pairs), null);
             }
-            if (top.isEmpty()) empty(s, item);
+            if (top.isEmpty()) empty(s, s.topMode.equals("balance") ? "empty" : "period-empty", item);
             return;
         }
         List<Drops.Drop> drops = FlareMobcoins.get().drops().enabled()
-                ? new ArrayList<>(FlareMobcoins.get().drops().list()) : new ArrayList<>();
+                ? FlareMobcoins.get().drops().visible() : new ArrayList<>();
         int from = s.page * slots.size();
         for (int i = 0; i < slots.size() && from + i < drops.size(); i++) {
             Drops.Drop d = drops.get(from + i);
             s.set(slots.get(i), s.build(withMaterial(item, icon(d)), slots.get(i), dropPairs(s, d)), null);
         }
-        if (drops.isEmpty()) empty(s, item);
+        if (drops.isEmpty()) empty(s, "empty", item);
     }
 
     private static String[] dropPairs(MenuSession s, Drops.Drop d) {
@@ -84,6 +87,8 @@ final class Builtins {
             default: {
                 List<String> names = new ArrayList<>();
                 for (String e : d.entities()) names.add(pretty(e));
+                for (String m : d.mythic()) names.add(Drops.pretty(m));
+                if (d.anyMythic()) names.add(s.def.text("groups.mythic", "MythicMobs mobs"));
                 entities = String.join(", ", names);
             }
         }
@@ -125,10 +130,11 @@ final class Builtins {
         return copy;
     }
 
-    private static void empty(MenuSession s, MenuItem item) {
-        String name = s.def.text("empty.name", null);
+    private static void empty(MenuSession s, String path, MenuItem item) {
+        String name = s.def.text(path + ".name", null);
+        if (name == null) name = s.def.text("empty.name", null);
         if (name == null) return;
-        ItemSpec spec = ItemSpec.simple(s.def.text("empty.material", "BARRIER"), name, s.def.lines("empty.lore"));
+        ItemSpec spec = ItemSpec.simple(s.def.text(path + ".material", "BARRIER"), name, s.def.lines(path + ".lore"));
         s.set(center(item.slots), spec.build(t -> Placeholders.apply(t, s.player)), null);
     }
 
@@ -175,6 +181,26 @@ final class Builtins {
             case "top":
                 menus.openLater(s.player, TOP, s);
                 return true;
+            case "all-time":
+            case "weekly":
+            case "monthly": {
+                if (!s.def.id.equals(TOP)) return false;
+                String mode = item.key.equals("all-time") ? "balance" : item.key;
+                if (!mode.equals("balance") && !plugin.periodTops().enabled(mode)) return true;
+                s.topMode = mode;
+                // the list is read again (at most every 5 seconds)
+                plugin.coins().refreshTopThen(() -> plugin.stats().refreshTops(Math.max(10, plugin.getConfig().getInt("top.size", 10)), () -> {
+                    if (s.player.isOnline() && menus.isOpen(s.player, s)) s.render();
+                }));
+                s.render();
+                return true;
+            }
+            case "stats":
+                Actions.closeLater(s.player);
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (s.player.isOnline()) s.player.performCommand("mobcoins stats");
+                });
+                return true;
             case "previous":
                 if (s.page > 0) {
                     s.page--;
@@ -182,7 +208,7 @@ final class Builtins {
                 }
                 return true;
             case "next":
-                if ((s.page + 1) * pageSize(s) < plugin.drops().list().size()) {
+                if ((s.page + 1) * pageSize(s) < plugin.drops().visible().size()) {
                     s.page++;
                     s.render();
                 }
@@ -213,8 +239,32 @@ final class Builtins {
         }
     }
 
-    /** confirm.yml: the "product" element shows the product being bought. */
+    /** confirm.yml: the "product" element shows the product being bought. top.yml: the shown list glows. */
     static boolean drawSpecial(MenuSession s, MenuItem item, int slot) {
+        if (s.def.builtin && s.def.id.equals(TOP) && item.element && item.key.equals("stats")
+                && item.clickAny.isEmpty() && item.clickBy.isEmpty() && !FlareMobcoins.get().menus().canOpen(s.player, "stats")) {
+            // stats turned off for this player: no button
+            s.set(slot, null, null);
+            return true;
+        }
+        if (s.def.builtin && s.def.id.equals(TOP) && item.element
+                && (item.key.equals("all-time") || item.key.equals("weekly") || item.key.equals("monthly"))) {
+            String mode = item.key.equals("all-time") ? "balance" : item.key;
+            if (!mode.equals("balance") && !FlareMobcoins.get().periodTops().enabled(mode)) {
+                s.set(slot, null, null);
+                return true;
+            }
+            ItemStack stack = s.build(item, slot, null);
+            if (stack != null && mode.equals(s.topMode)) {
+                org.bukkit.inventory.meta.ItemMeta meta = stack.getItemMeta();
+                if (meta != null) {
+                    dev.tmdevelopment.flaremobcoins.util.Compat.glow(stack, meta);
+                    stack.setItemMeta(meta);
+                }
+            }
+            s.set(slot, stack, (session, click) -> session.clickItem(item, click));
+            return true;
+        }
         if (!s.def.builtin || !s.def.id.equals(CONFIRM) || !item.key.equals("product") || s.pendingItem == null) return false;
         ItemStack stack = s.pendingFrom.build(s.pendingItem, slot, null);
         s.set(slot, stack, null);

@@ -8,7 +8,8 @@
 #  Click     "<click:run_command:'/mobcoins'>Text</click>"   Hover "<hover:show_text:'Text'>Text</hover>"
 #  Tip       always write texts between "quotes"
 #
-#  Mob drops are in drops.yml, shops in shops/, chat messages in lang/en.yml.
+#  Mob drops (golden mobs, combo, anti-farm, MythicMobs) are in drops.yml, shops in shops/,
+#  chat messages in lang/en.yml.
 
 config-version: 1
 
@@ -78,6 +79,104 @@ coins-on-ground:
     - "[ACTIONBAR] &7You picked up &#f7c948{amount} &7mobcoins"
     - "[SOUND] ENTITY_EXPERIENCE_ORB_PICKUP 1 1.5"
 
+# Timed boosters: a multiplier of the mob drops for some time. The time also runs while the player is offline.
+#   /mobcoins booster give <player> <multiplier> <time>     starts it now (e.g. 2 1h)
+#   /mobcoins booster item <player> <multiplier> <time>     an item to use later with a right click
+# Two boosters of the same multiplier add their time; with different ones the highest counts.
+boosters:
+  # Boss bar with the time left (1.9+)
+  bossbar:
+    enabled: true
+    color: "GREEN"
+    style: "SOLID"
+  # The booster item. {multiplier} {time}
+  item:
+    material: "EXPERIENCE_BOTTLE"
+    name: "<gradient:#f7b733:#fce38a><bold>MobCoins Booster</bold></gradient>"
+    lore:
+      - "&7Multiplier: &#f7c948x{multiplier}"
+      - "&7Time: &f{time}"
+      - ""
+      - "&#f7c948Right click &7to use it"
+    glow: true
+
+# Events: every mob of the server gives more for some time.   /mobcoins event start <multiplier> <time>
+# With MySQL the event is on every server of the network. Messages are in lang/en.yml > event
+events:
+  # Boss bar with the time left for everybody (1.9+)
+  bossbar:
+    enabled: true
+    color: "YELLOW"
+    style: "SOLID"
+
+# Notes: /mobcoins withdraw <amount> turns mobcoins into an item to trade. Right click = mobcoins back.
+# Every note can be redeemed once (copied notes give nothing). Notes can always be redeemed, also after turning this off.
+withdraw:
+  enabled: false
+  min-amount: 10
+  # {amount} {amount_commas} {amount_formatted} {player}
+  item:
+    material: "PAPER"
+    name: "<gradient:#f7b733:#fce38a><bold>MobCoins Note</bold></gradient>"
+    lore:
+      - "&7Value: &#f7c948{amount_commas} mobcoins"
+      - "&7Signed by &f{player}"
+      - ""
+      - "&#f7c948Right click &7to redeem"
+    glow: true
+
+# Sell loot for mobcoins: /mobcoins sell (a menu, close = sold), /mobcoins sell hand, /mobcoins sell all
+sell:
+  enabled: false
+  # Only normal items: renamed items, items with lore or enchantments are never sold
+  only-plain-items: true
+  # Mobcoins for one item. Material names of the latest version (old versions understand them too)
+  prices:
+    ROTTEN_FLESH: 0.05
+    BONE: 0.1
+    STRING: 0.1
+    ARROW: 0.05
+    SPIDER_EYE: 0.2
+    GUNPOWDER: 0.25
+    ENDER_PEARL: 1
+    SLIME_BALL: 0.3
+    BLAZE_ROD: 1
+    MAGMA_CREAM: 0.5
+    GHAST_TEAR: 2
+    LEATHER: 0.1
+    FEATHER: 0.05
+
+# Weekly and monthly top: mobcoins got from mobs this week (from Monday) and this month.
+#   /mobcoins top weekly · /mobcoins top monthly · buttons in the top menu · %flaremobcoins_top_weekly_1_name%
+# When the week / month ends the best players get the rewards (with MySQL only once for the whole network).
+# Reward lines: [mobcoins] <amount> · [console] <command> · [message] <text> (if online) · [broadcast] <text>
+# Placeholders: {player} {uuid} {position} {amount}. Positions: "1", "2", "4-10" ...
+tops:
+  weekly:
+    enabled: true
+    rewards-enabled: false
+    rewards:
+      "1":
+        - "[mobcoins] 1000"
+        - "[message] {prefix}&7You were &#f7c948#1 &7of the weekly top: &#f7c948+1,000 &7mobcoins!"
+      "2":
+        - "[mobcoins] 500"
+      "3":
+        - "[mobcoins] 250"
+  monthly:
+    enabled: true
+    rewards-enabled: false
+    rewards:
+      "1":
+        - "[mobcoins] 5000"
+        - "[message] {prefix}&7You were &#f7c948#1 &7of the monthly top: &#f7c948+5,000 &7mobcoins!"
+      "2":
+        - "[mobcoins] 2500"
+      "3":
+        - "[mobcoins] 1000"
+      "4-10":
+        - "[mobcoins] 250"
+
 # Shops are the files in shops/ (main.yml is an example with every option explained).
 shop:
   enabled: true
@@ -114,6 +213,8 @@ player-access:
   drops: true
   top: true
   pay: true
+  # /mobcoins stats
+  stats: true
 
 # Menus of the plugin (/mobcoins menu, drops, top, confirm) are in menus/, the shops in shops/.
 # Edit them in game with /mobcoins editor, every option with /mobcoins settings.
@@ -129,6 +230,8 @@ sounds:
   pay: "ENTITY_PLAYER_LEVELUP"
   open-shop: "BLOCK_CHEST_OPEN"
   error: "ENTITY_VILLAGER_NO"
+  # start of an event
+  event: "ENTITY_PLAYER_LEVELUP"
 
 # Looks for a new FlareMobcoins version on GitHub (on start and every 6 hours). It only reads the public
 # releases: nothing is sent. New versions are written in the console and admins get a message when they join.
@@ -136,7 +239,8 @@ sounds:
 update-check: true
 
 # Anonymous usage statistics (TMDStats): plugin and Minecraft version, server software, Java version,
-# player count, storage type, number of shops and drops, coins on ground on/off. No player names, no IPs.
+# player count, storage type, number of shops and drops, which features are on (coins on ground, golden mobs,
+# combo, anti-farm, sell, withdraw) and if MythicMobs is installed. No player names, no IPs.
 # Also off for every TMDevelopment plugin in plugins/TMDStats/config.yml
 stats: true
 

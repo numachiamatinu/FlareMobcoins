@@ -41,6 +41,8 @@ public final class MenuSession implements InventoryHolder {
     double pendingPrice;
     /** pages of the lists of the plugin (drops) */
     int page;
+    /** top menu: "balance", "weekly" or "monthly" */
+    String topMode = "balance";
 
     MenuSession(MenuDef def, Player player, MenuSession parent) {
         this.def = def;

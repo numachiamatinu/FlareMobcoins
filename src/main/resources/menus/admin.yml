@@ -100,6 +100,27 @@ settings:
   reload:
     name: "&aReload files"
     lore: ["&7Reads every file again"]
+  golden-mobs:
+    name: "&fGolden mobs"
+    lore: ["&7A few mobs spawn golden and", "&7give more mobcoins (drops.yml)."]
+  combo:
+    name: "&fCombo"
+    lore: ["&7Kills in a row raise the", "&7multiplier (drops.yml)."]
+  anti-farm:
+    name: "&fAnti-farm"
+    lore: ["&7Limits for mob farms", "&7(drops.yml > anti-farm)."]
+  withdraw:
+    name: "&fNotes"
+    lore: ["&7/mobcoins withdraw: mobcoins", "&7into an item to trade."]
+  sell:
+    name: "&fSell loot"
+    lore: ["&7/mobcoins sell: mob loot", "&7for mobcoins."]
+  weekly-rewards:
+    name: "&fWeekly top rewards"
+    lore: ["&7Rewards for the best players", "&7of the week (config.yml > tops)."]
+  monthly-rewards:
+    name: "&fMonthly top rewards"
+    lore: ["&7Rewards for the best players", "&7of the month (config.yml > tops)."]
 access:
   title: "&7Player access"
   menu:
@@ -117,6 +138,20 @@ access:
   pay:
     name: "&fPayments"
     lore: ["&7/mobcoins pay"]
+  stats:
+    name: "&fStats"
+    lore: ["&7/mobcoins stats"]
+sell:
+  title: "<gradient:#f7b733:#fce38a>Sell</gradient> &7(close = sell)"
+  sell:
+    name: "&aSell now"
+    lore: ["&7Items: &f{count}", "&7Value: &#f7c948{amount_commas} mobcoins", "", "&#f7c948Click to sell"]
+  cancel:
+    name: "&cCancel"
+    lore: ["&7Gives your items back"]
+  help:
+    name: "&#f7c948How it works"
+    lore: ["&7Put the items in the menu.", "&7Closing it sells them, items", "&7without a price come back.", "&7Prices: /mobcoins sell prices"]
 menus:
   title: "<gradient:#f7b733:#fce38a>Menus and shops</gradient>"
   help:

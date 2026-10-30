@@ -19,10 +19,12 @@ public final class PlayerListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onJoin(PlayerJoinEvent e) {
         plugin.coins().load(e.getPlayer());
+        plugin.stats().load(e.getPlayer(), null);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent e) {
         plugin.coins().unload(e.getPlayer().getUniqueId());
+        plugin.stats().unload(e.getPlayer().getUniqueId());
     }
 }

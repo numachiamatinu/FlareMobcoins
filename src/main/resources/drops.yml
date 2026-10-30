@@ -7,6 +7,8 @@
 #    HOSTILE every hostile mob · PASSIVE every other mob · DEFAULT (or ALL) every mob not in the list
 #  An entry with any name can also choose its mobs like in 3.x:  entity: ZOMBIE / HOSTILE  or  entities: [HUSK, DROWNED]
 #  A mob uses the most precise entry: its own name first, then HOSTILE / PASSIVE, then DEFAULT.
+#  MythicMobs: an entry with  mythic: SkeletonKing  (or a list) is for that mob (name of its file). MYTHIC = every
+#  MythicMobs mob without its own entry. Options in the "mythicmobs" section below.
 #
 #    chance        percent of kills that give mobcoins (100 = always). 3.x name: drop_chance
 #    amount        "5" fixed · "2.5" with decimals · "1-10" random · "random_decimal(1,2)" random with decimals
@@ -20,7 +22,7 @@
 #    icon          optional: item shown in /mobcoins drops
 #
 #  The amount is multiplied by: the player multiplier (/mobcoins multiplier) × the global multiplier
-#  × the best permission multiplier below.
+#  × the best permission multiplier below × booster × event × golden mob × combo.
 
 enabled: true
 
@@ -38,6 +40,61 @@ stackers: false
 multipliers:
   flaremobcoins.multiplier.vip: 1.5
   flaremobcoins.multiplier.mvp: 2
+
+# Golden mobs: a few mobs spawn golden (name above them, shining on 1.9+) and give more mobcoins.
+golden-mobs:
+  enabled: true
+  # Percent of the mobs that spawn golden
+  chance: 1
+  # Their mobcoins are multiplied by this
+  multiplier: 5
+  # Which mobs: names or groups (HOSTILE, PASSIVE, ALL)
+  mobs:
+    - "HOSTILE"
+  # Mobs from spawners can be golden too
+  from-spawners: false
+  # Name above the mob ("" = none). {mob} = name of the mob
+  name: "&#f7c948&l✦ &#fce38aGolden {mob} &#f7c948&l✦"
+  # Shining outline (1.9+)
+  glow: true
+  # When a player kills one. {player} {mob_name} {amount}
+  actions:
+    - "[BROADCAST] {prefix}&f{player} &7killed a &#f7c948golden {mob_name} &7and got &#f7c948{amount} &7mobcoins!"
+    - "[SOUND] ENTITY_PLAYER_LEVELUP 1 1.5"
+
+# Combo: kills in a row raise the multiplier. Against mob farms: mobs from spawners don't count and only the
+# first kills in the same chunk (last 10 minutes) count. A kill that doesn't count gets no combo multiplier.
+combo:
+  enabled: false
+  # Seconds to kill the next mob before the combo ends
+  seconds: 6
+  # Kills in a row: multiplier (the highest reached counts)
+  steps:
+    "5": 1.1
+    "15": 1.25
+    "30": 1.5
+    "50": 2
+  count-spawner-mobs: false
+  # Kills in the same chunk (last 10 minutes) that still count. 0 = no limit
+  max-kills-per-chunk: 20
+
+# Anti-farm: limits for mob farms and grinders.
+anti-farm:
+  enabled: false
+  # Most mobcoins a player can get from mobs in one hour. 0 = no limit
+  max-per-hour: 0
+  # After "chunk-kills" kills in the same chunk in "chunk-minutes" minutes, the next ones there give
+  # "chunk-percent" percent of the mobcoins (0 = nothing)
+  chunk-kills: 50
+  chunk-minutes: 10
+  chunk-percent: 25
+
+# MythicMobs (4.x and 5.x, found by itself)
+mythicmobs:
+  # MythicMobs mobs without an entry (and no MYTHIC entry) use the normal entries of their type (ZOMBIE ...)
+  normal-entries: true
+  # Extra percent of mobcoins for every level above 1 (10 = level 5 gives 40% more). 0 = off
+  level-bonus: 0
 
 entity:
   ZOMBIE:
@@ -71,3 +128,8 @@ entity:
   PASSIVE:
     chance: 25
     amount: "0.5"
+  # MythicMobs example (only used if you have a mob called SkeletonKing)
+  skeleton_king:
+    mythic: "SkeletonKing"
+    chance: 100
+    amount: "50-100"

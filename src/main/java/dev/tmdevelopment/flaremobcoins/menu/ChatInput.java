@@ -32,7 +32,7 @@ public final class ChatInput implements Listener {
         Bukkit.getScheduler().runTask(plugin, () -> {
             player.closeInventory();
             plugin.lang().send(player, message, "{current}", now);
-            plugin.lang().send(player, "input.hint", "{current}", now);
+            plugin.lang().send(player, now.isEmpty() ? "input.hint-empty" : "input.hint", "{current}", now);
         });
     }
 

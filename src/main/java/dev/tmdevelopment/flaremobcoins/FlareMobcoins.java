@@ -48,6 +48,11 @@ public final class FlareMobcoins extends JavaPlugin {
     private dev.tmdevelopment.flaremobcoins.menu.ChestBuilder chestBuilder;
     private Drops drops;
     private GroundCoins groundCoins;
+    private dev.tmdevelopment.flaremobcoins.data.StatsManager playerStats;
+    private dev.tmdevelopment.flaremobcoins.feature.Boosts boosts;
+    private dev.tmdevelopment.flaremobcoins.feature.Notes notes;
+    private dev.tmdevelopment.flaremobcoins.feature.Sell sell;
+    private dev.tmdevelopment.flaremobcoins.feature.PeriodTops periodTops;
     private TMDStats stats;
     private UpdateChecker updates;
     private ChatInput chatInput;
@@ -77,6 +82,7 @@ public final class FlareMobcoins extends JavaPlugin {
         state.load();
         Storage storage = createStorage(getConfig().getString("storage.type", "sqlite"));
         coins = new CoinManager(this, storage, state);
+        playerStats = new dev.tmdevelopment.flaremobcoins.data.StatsManager(this, coins);
         try {
             coins.open();
         } catch (Throwable t) {
@@ -87,6 +93,13 @@ public final class FlareMobcoins extends JavaPlugin {
             return;
         }
         VaultHook.setup();
+        dev.tmdevelopment.flaremobcoins.hook.MythicHook.setup();
+        boosts = new dev.tmdevelopment.flaremobcoins.feature.Boosts(this);
+        boosts.load();
+        notes = new dev.tmdevelopment.flaremobcoins.feature.Notes(this);
+        sell = new dev.tmdevelopment.flaremobcoins.feature.Sell(this);
+        sell.load();
+        periodTops = new dev.tmdevelopment.flaremobcoins.feature.PeriodTops(this, state);
         menus = new MenuManager(this, state);
         chestBuilder = new dev.tmdevelopment.flaremobcoins.menu.ChestBuilder(this);
         menus.load();
@@ -103,6 +116,12 @@ public final class FlareMobcoins extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(groundCoins, this);
         Bukkit.getPluginManager().registerEvents(updates, this);
         Bukkit.getPluginManager().registerEvents(chatInput, this);
+        Bukkit.getPluginManager().registerEvents(boosts, this);
+        Bukkit.getPluginManager().registerEvents(notes, this);
+        Bukkit.getPluginManager().registerEvents(sell, this);
+        for (Player p : Bukkit.getOnlinePlayers()) playerStats.load(p, null);
+        boosts.syncEvent();
+        periodTops.start();
         groundCoins.registerPickup();
         getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 
@@ -121,8 +140,11 @@ public final class FlareMobcoins extends JavaPlugin {
             }
             if (name.equalsIgnoreCase("Vault")) VaultHook.setup();
         });
-        // economy plugins register in Vault after us
-        Bukkit.getScheduler().runTaskLater(this, VaultHook::setup, 40L);
+        // economy plugins register in Vault after us; MythicMobs may be enabled after us too
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            VaultHook.setup();
+            dev.tmdevelopment.flaremobcoins.hook.MythicHook.setup();
+        }, 40L);
         startTasks();
         updates.start();
         startMetrics();
@@ -136,8 +158,14 @@ public final class FlareMobcoins extends JavaPlugin {
         if (updates != null) updates.stop();
         if (stats != null) stats.shutdown();
         if (groundCoins != null) groundCoins.shutdown();
+        if (sell != null) sell.closeAll();
         if (menus != null) menus.shutdown();
+        if (boosts != null) boosts.shutdown();
+        if (periodTops != null) periodTops.shutdown();
+        if (drops != null) drops.shutdown();
         if (state != null) state.saveSync();
+        // stats first: they are written before the storage closes
+        if (playerStats != null && coins != null) playerStats.flush();
         if (coins != null) coins.shutdown();
         instance = null;
     }
@@ -148,10 +176,20 @@ public final class FlareMobcoins extends JavaPlugin {
         String type = coins.storage().type();
         long refresh = getConfig().getLong("storage.refresh-seconds", 10);
         if ((type.equals("mysql") || type.equals("mariadb")) && refresh > 0) {
-            tasks.add(Bukkit.getScheduler().runTaskTimer(this, coins::refreshOnline, refresh * 20, refresh * 20));
+            tasks.add(Bukkit.getScheduler().runTaskTimer(this, () -> {
+                coins.refreshOnline();
+                // an event started or stopped on another server of the network
+                boosts.syncEvent();
+            }, refresh * 20, refresh * 20));
         }
         long top = Math.max(10, getConfig().getLong("top.refresh-seconds", 60));
-        tasks.add(Bukkit.getScheduler().runTaskTimer(this, () -> coins.refreshTop(), top * 20, top * 20));
+        int topSize = Math.max(10, getConfig().getInt("top.size", 10));
+        tasks.add(Bukkit.getScheduler().runTaskTimer(this, () -> {
+            coins.refreshTop();
+            playerStats.refreshTops(topSize, null);
+        }, 100L, top * 20));
+        // stats are written together every 30 seconds
+        tasks.add(Bukkit.getScheduler().runTaskTimer(this, playerStats::flush, 600L, 600L));
         if (type.equals("yaml")) tasks.add(Bukkit.getScheduler().runTaskTimer(this, coins::flushAsync, 200L, 200L));
     }
 
@@ -193,6 +231,9 @@ public final class FlareMobcoins extends JavaPlugin {
         for (String key : defaults.getKeys(true)) {
             if (defaults.isConfigurationSection(key)) continue;
             if (key.startsWith("auto-install.plugins.") && c.isSet("auto-install.plugins")) continue;
+            // lists of the server: the examples are added only with the whole section
+            if (key.startsWith("sell.prices.") && c.isSet("sell.prices")) continue;
+            if (key.matches("tops\\.(weekly|monthly)\\.rewards\\..*") && c.isSet(key.substring(0, key.indexOf(".rewards.") + 8))) continue;
             if (!c.isSet(key)) missing.add(key);
         }
         if (missing.isEmpty()) return;
@@ -214,11 +255,15 @@ public final class FlareMobcoins extends JavaPlugin {
         Num.setSuffixes(getConfig().getStringList("format.suffixes"));
         lang.load();
         coins.reloadSettings();
+        sell.closeAll();
         menus.closeAll();
         menus.load();
         drops.load();
         groundCoins.load();
+        boosts.load();
+        sell.load();
         VaultHook.setup();
+        dev.tmdevelopment.flaremobcoins.hook.MythicHook.setup();
         startTasks();
         updates.start();
         coins.refreshTop();
@@ -230,6 +275,8 @@ public final class FlareMobcoins extends JavaPlugin {
         Num.setSuffixes(getConfig().getStringList("format.suffixes"));
         coins.reloadSettings();
         groundCoins.load();
+        boosts.load();
+        sell.load();
         startTasks();
         updates.start();
     }
@@ -245,6 +292,12 @@ public final class FlareMobcoins extends JavaPlugin {
             stats.addValue("shops", () -> menus.size());
             stats.addValue("drops", () -> drops.enabled() ? drops.size() : 0);
             stats.addValue("coins_on_ground", () -> groundCoins.enabled() ? "On" : "Off");
+            stats.addValue("golden_mobs", () -> drops.enabled() && drops.goldenEnabled() ? "On" : "Off");
+            stats.addValue("combo", () -> drops.enabled() && drops.comboEnabled() ? "On" : "Off");
+            stats.addValue("anti_farm", () -> drops.enabled() && drops.antiFarmEnabled() ? "On" : "Off");
+            stats.addValue("sell", () -> sell.enabled() ? "On" : "Off");
+            stats.addValue("withdraw", () -> notes.enabled() ? "On" : "Off");
+            stats.addValue("mythicmobs", () -> dev.tmdevelopment.flaremobcoins.hook.MythicHook.available() ? "Yes" : "No");
         } catch (Throwable t) {
             getLogger().fine("TMDStats not started: " + t.getMessage());
         }
@@ -269,11 +322,19 @@ public final class FlareMobcoins extends JavaPlugin {
                 "<gray>  Shops: <white>" + menus.size() + " <dark_gray>| <gray>Drops: "
                         + (drops.enabled() ? "<green>" + drops.size() : "<white>off")
                         + " <dark_gray>| <gray>Coins on ground: " + (groundCoins.enabled() ? "<green>on" : "<white>off"),
+                "<gray>  Golden mobs: " + onOff(drops.enabled() && drops.goldenEnabled()) + " <dark_gray>| <gray>Combo: "
+                        + onOff(drops.enabled() && drops.comboEnabled()) + " <dark_gray>| <gray>Anti-farm: " + onOff(drops.enabled() && drops.antiFarmEnabled())
+                        + " <dark_gray>| <gray>Sell: " + onOff(sell.enabled()) + " <dark_gray>| <gray>Withdraw: " + onOff(notes.enabled()),
                 "<gray>  PlaceholderAPI: " + (papi ? "<green>hooked" : papiDownload() ? "<yellow>downloading..." : "<red>not found") + " <dark_gray>| <gray>Vault: "
-                        + (vault ? "<green>found" : "<red>not found"),
+                        + (vault ? "<green>found" : "<red>not found")
+                        + (Bukkit.getPluginManager().isPluginEnabled("MythicMobs") ? " <dark_gray>| <gray>MythicMobs: <green>hooked" : ""),
                 "<gray>  Enabled in <white>" + ms + "ms",
                 ""};
         for (String l : lines) Bukkit.getConsoleSender().sendMessage(Text.console(l));
+    }
+
+    private static String onOff(boolean on) {
+        return on ? "<green>on" : "<white>off";
     }
 
     /** PlaceholderAPI is missing but auto-install is getting it (the banner says so instead of "not found"). */
@@ -313,5 +374,25 @@ public final class FlareMobcoins extends JavaPlugin {
 
     public GroundCoins coinsOnGround() {
         return groundCoins;
+    }
+
+    public dev.tmdevelopment.flaremobcoins.data.StatsManager stats() {
+        return playerStats;
+    }
+
+    public dev.tmdevelopment.flaremobcoins.feature.Boosts boosts() {
+        return boosts;
+    }
+
+    public dev.tmdevelopment.flaremobcoins.feature.Notes notes() {
+        return notes;
+    }
+
+    public dev.tmdevelopment.flaremobcoins.feature.Sell sell() {
+        return sell;
+    }
+
+    public dev.tmdevelopment.flaremobcoins.feature.PeriodTops periodTops() {
+        return periodTops;
     }
 }

@@ -3,8 +3,8 @@ version: '${project.version}'
 main: dev.tmdevelopment.flaremobcoins.FlareMobcoins
 api-version: '1.13'
 author: TMDevelopment
-description: MobCoins from killing mobs, with shops, rotating shops, multipliers and PlaceholderAPI support.
-softdepend: [PlaceholderAPI, Vault, FlareTokens, ItemsAdder, ExecutableItems, RoseStacker, WildStacker]
+description: MobCoins from killing mobs, with shops, rotating shops, boosters, events, golden mobs, weekly tops and PlaceholderAPI support.
+softdepend: [PlaceholderAPI, Vault, FlareTokens, ItemsAdder, ExecutableItems, RoseStacker, WildStacker, MythicMobs]
 
 commands:
   mobcoins:
@@ -15,7 +15,7 @@ commands:
 
 permissions:
   flaremobcoins.player:
-    description: Every player command (balance, pay, menu, shop, drops, top)
+    description: Every player command (balance, pay, menu, shop, drops, top, stats, sell, withdraw) and using boosters and notes
     default: true
     children:
       flaremobcoins.command.help: true
@@ -25,11 +25,20 @@ permissions:
       flaremobcoins.command.shop: true
       flaremobcoins.command.drops: true
       flaremobcoins.command.top: true
+      flaremobcoins.command.stats: true
+      flaremobcoins.command.sell: true
+      flaremobcoins.command.withdraw: true
+      flaremobcoins.booster.use: true
+      flaremobcoins.redeem: true
   flaremobcoins.admin:
-    description: Every command (give, remove, set, multiplier, settings, editor, layout, reload, migrate, about, balance of others, shop for others)
+    description: Every command (give, remove, set, multiplier, booster, event, settings, editor, layout, reload, migrate, about, balance and stats of others, shop for others)
     default: op
     children:
       flaremobcoins.player: true
+      flaremobcoins.command.stats.others: true
+      flaremobcoins.command.booster: true
+      flaremobcoins.command.event: true
+      flaremobcoins.redeem.creative: true
       flaremobcoins.command.balance.others: true
       flaremobcoins.command.balance.other: true
       flaremobcoins.command.shop.others: true
@@ -65,6 +74,33 @@ permissions:
   flaremobcoins.command.top:
     description: "/mobcoins top: richest players"
     default: true
+  flaremobcoins.command.stats:
+    description: "/mobcoins stats: your kills and mobcoins from mobs"
+    default: true
+  flaremobcoins.command.sell:
+    description: "/mobcoins sell: sell mob loot (when sell is on in config.yml)"
+    default: true
+  flaremobcoins.command.withdraw:
+    description: "/mobcoins withdraw: mobcoins into a note (when withdraw is on in config.yml)"
+    default: true
+  flaremobcoins.booster.use:
+    description: "Use booster items (right click)"
+    default: true
+  flaremobcoins.redeem:
+    description: "Redeem mobcoin notes (right click)"
+    default: true
+  flaremobcoins.redeem.creative:
+    description: "Use notes in creative mode"
+    default: op
+  flaremobcoins.command.stats.others:
+    description: "/mobcoins stats <player>: stats of other players"
+    default: op
+  flaremobcoins.command.booster:
+    description: "/mobcoins booster give|item|remove|check: timed boosters"
+    default: op
+  flaremobcoins.command.event:
+    description: "/mobcoins event start|stop: more mobcoins for everybody for some time"
+    default: op
   flaremobcoins.command.balance.others:
     description: "/mobcoins balance <player>: balance of other players"
     default: op

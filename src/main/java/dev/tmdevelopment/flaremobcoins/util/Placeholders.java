@@ -56,6 +56,22 @@ public final class Placeholders {
             if (player != null && (text.indexOf('{') >= 0 || text.contains("%pl_"))) {
                 double coins = plugin.coins() == null ? 0 : plugin.coins().balance(player.getUniqueId());
                 double mult = plugin.coins() == null ? 1 : plugin.coins().multiplier(player.getUniqueId());
+                if (text.contains("{booster") && plugin.boosts() != null) {
+                    double[] b = plugin.boosts().best(player.getUniqueId());
+                    text = pairs(text, "{booster_time}", b == null ? "-" : Time.format((long) b[1] - System.currentTimeMillis()),
+                            "{booster}", b == null ? "1" : Num.plain(b[0]));
+                }
+                if (text.contains("{event_") && plugin.boosts() != null) {
+                    text = pairs(text, "{event_multiplier}", Num.plain(plugin.boosts().event()),
+                            "{event_time}", plugin.boosts().eventActive() ? Time.format(plugin.boosts().eventLeft()) : "-");
+                }
+                if ((text.contains("{kills}") || text.contains("{earned")) && plugin.stats() != null) {
+                    java.util.UUID id = player.getUniqueId();
+                    text = pairs(text, "{kills}", Num.commas(plugin.stats().get(id, "kills")),
+                            "{earned_weekly}", Num.commas(plugin.stats().get(id, dev.tmdevelopment.flaremobcoins.data.StatsManager.week())),
+                            "{earned_monthly}", Num.commas(plugin.stats().get(id, dev.tmdevelopment.flaremobcoins.data.StatsManager.month())),
+                            "{earned}", Num.commas(plugin.stats().get(id, "earned")));
+                }
                 text = pairs(text,
                         "{player}", player.getName(),
                         "{mobcoins_formatted}", Num.shortFormat(coins),

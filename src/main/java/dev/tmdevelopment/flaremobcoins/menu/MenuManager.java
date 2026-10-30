@@ -137,12 +137,47 @@ public final class MenuManager {
             YamlConfiguration defaults = resource(res);
             boolean broken = y == null;
             if (broken) y = defaults == null ? new YamlConfiguration() : defaults;
-            else if (defaults != null && complete(y, defaults)) save(f, res, y);
+            else if (defaults != null) {
+                // new elements and texts are copied from the file in the jar as text (quotes and comments too)
+                List<String> missing = missing(y, defaults);
+                String text = missing.isEmpty() ? null : dev.tmdevelopment.flaremobcoins.config.ConfigUpdater.resource(plugin, res);
+                boolean updated = false;
+                if (text != null && dev.tmdevelopment.flaremobcoins.config.ConfigUpdater.addMissing(f, text, missing, plugin.getLogger())) {
+                    YamlConfiguration again = read(f, res);
+                    if (again != null) y = again;
+                    updated = true;
+                }
+                if (complete(y, defaults) | upgrade(id, y, defaults)) {
+                    save(f, res, y);
+                    updated = true;
+                }
+                if (updated) plugin.getLogger().info(res + " updated with the new buttons and texts of this version.");
+            }
             ConfigurationSection texts = defaults == null ? null : defaults.getConfigurationSection("texts");
             MenuDef d = MenuDef.load(id, f, true, y, texts, plugin.getLogger());
             d.broken = broken;
             builtins.put(id, d);
         }
+    }
+
+    /** Keys of the file in the jar that the server file doesn't have (whole elements, texts, top options). */
+    private static List<String> missing(YamlConfiguration y, YamlConfiguration defaults) {
+        List<String> out = new ArrayList<>();
+        ConfigurationSection elements = defaults.getConfigurationSection("elements");
+        if (elements != null) {
+            for (String k : elements.getKeys(false)) {
+                if (y.isConfigurationSection("elements." + k)) continue;
+                ConfigurationSection e = elements.getConfigurationSection(k);
+                if (e == null) continue;
+                for (String leaf : e.getKeys(true)) if (!e.isConfigurationSection(leaf)) out.add("elements." + k + "." + leaf);
+            }
+        }
+        ConfigurationSection texts = defaults.getConfigurationSection("texts");
+        if (texts != null) {
+            for (String k : texts.getKeys(true)) if (!texts.isConfigurationSection(k) && !y.isSet("texts." + k)) out.add("texts." + k);
+        }
+        for (String k : new String[]{"enabled", "open-commands", "open-permission"}) if (!y.isSet(k) && defaults.isSet(k)) out.add(k);
+        return out;
     }
 
     /** Elements and texts added by a new version go in the file of the server (edited ones are kept). */
@@ -173,6 +208,18 @@ public final class MenuManager {
             }
         }
         return changed;
+    }
+
+    /** Default texts of an older version that changed: replaced only when the server never edited them. */
+    private static boolean upgrade(String id, YamlConfiguration y, YamlConfiguration defaults) {
+        if (!id.equals(Builtins.TOP)) return false;
+        // 4.1.0: the top also shows the week / month, the lore says which one
+        List<String> lore = y.getStringList("elements.entries.lore");
+        if (lore.size() == 1 && lore.get(0).equals("&7MobCoins: &f{amount_commas}") && defaults.isList("elements.entries.lore")) {
+            y.set("elements.entries.lore", defaults.getStringList("elements.entries.lore"));
+            return true;
+        }
+        return false;
     }
 
     YamlConfiguration read(File f, String name) {
@@ -220,12 +267,17 @@ public final class MenuManager {
                     if (!patched.equals(old.replace("\r\n", "\n"))) J8.write(f.toPath(), patched, StandardCharsets.UTF_8);
                     return;
                 }
+                // said in the console: the file is written again whole (quotes and layout change)
+                plugin.getLogger().warning("Could not change only the edited lines of " + f.getName() + " ("
+                        + dev.tmdevelopment.flaremobcoins.config.YamlKeeper.lastReason() + "): the whole file was saved again.");
             } catch (Exception ignored) {
                 // written again below
             }
         }
         String header = Headers.of(plugin, resource);
-        String body = Headers.split(y.saveToString())[1];
+        // our style when possible (quotes and lists like the files of the plugin), else Bukkit's
+        String own = dev.tmdevelopment.flaremobcoins.config.YamlKeeper.render(y);
+        String body = own != null ? own : Headers.split(y.saveToString())[1];
         try {
             J8.write(f.toPath(), header + body, StandardCharsets.UTF_8);
         } catch (Exception e) {
@@ -432,6 +484,16 @@ public final class MenuManager {
         // the close event of the previous menu removed it
         open.put(player.getUniqueId(), s);
         Actions.sound(player, "sounds.open-shop");
+    }
+
+    /** The top menu showing the balances, the weekly or the monthly top. */
+    public void openTop(Player player, String mode) {
+        if (!open(player, Builtins.TOP, true)) return;
+        MenuSession s = open.get(player.getUniqueId());
+        if (s != null && s.def.id.equals(Builtins.TOP) && !mode.equals(s.topMode)) {
+            s.topMode = mode;
+            s.render();
+        }
     }
 
     public void openLater(Player player, String id, MenuSession parent) {

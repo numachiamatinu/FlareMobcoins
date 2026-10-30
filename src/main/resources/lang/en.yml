@@ -18,6 +18,7 @@ general:
   reloaded: "{prefix}&7Files reloaded &8(&7{shops} shops, {drops} drops&8)&7."
   cancelled: "{prefix}&7Another plugin blocked this change."
   wait: "{prefix}&7Wait a moment before doing that again."
+  invalid-time: "{prefix}&f{input} &7is not a valid time (e.g. &f30m&7, &f1h&7, &f1h30m&7, &f2d&7)."
 
 # Shown when a player writes /mobcoins
 balance:
@@ -39,11 +40,17 @@ help:
     menu: " <click:run_command:'/{label} menu'><hover:show_text:'&7Click to open'>&#f7c948/{label} menu</hover></click> &7- your mobcoins menu"
     shop: " <click:run_command:'/{label} shop'><hover:show_text:'&7Click to open'>&#f7c948/{label} shop &7[shop]</hover></click> &7- open the shop"
     drops: " <click:run_command:'/{label} drops'><hover:show_text:'&7Click to open'>&#f7c948/{label} drops</hover></click> &7- mobcoins of every mob"
-    top: " <click:run_command:'/{label} top'><hover:show_text:'&7Click to open'>&#f7c948/{label} top</hover></click> &7- richest players"
+    top: " <click:run_command:'/{label} top'><hover:show_text:'&7Click to open'>&#f7c948/{label} top &7[weekly|monthly]</hover></click> &7- richest players"
+    stats: " <click:run_command:'/{label} stats'><hover:show_text:'&7Click to see them'>&#f7c948/{label} stats &7[player]</hover></click> &7- kills and mobcoins from mobs"
+    sell: " <click:run_command:'/{label} sell'><hover:show_text:'&7Click to open'>&#f7c948/{label} sell &7[hand|all]</hover></click> &7- sell mob loot"
+    withdraw: " <click:suggest_command:'/{label} withdraw '><hover:show_text:'&7Click to write it'>&#f7c948/{label} withdraw &7<amount></hover></click> &7- mobcoins into a note"
+    booster-self: " <click:run_command:'/{label} booster'><hover:show_text:'&7Click to see them'>&#f7c948/{label} booster</hover></click> &7- your boosters"
     give: " <click:suggest_command:'/{label} give '><hover:show_text:'&7Click to write it'>&#f7c948/{label} give &7<player|*> <amount> [-s]</hover></click> &7- give mobcoins"
     remove: " <click:suggest_command:'/{label} remove '><hover:show_text:'&7Click to write it'>&#f7c948/{label} remove &7<player|*> <amount> [-s]</hover></click> &7- remove mobcoins"
     set: " <click:suggest_command:'/{label} set '><hover:show_text:'&7Click to write it'>&#f7c948/{label} set &7<player> <amount> [-s]</hover></click> &7- set a balance"
     multiplier: " <click:suggest_command:'/{label} multiplier '><hover:show_text:'&7Click to write it'>&#f7c948/{label} multiplier &7<set|reset|global></hover></click> &7- drop multipliers"
+    booster: " <click:suggest_command:'/{label} booster '><hover:show_text:'&7Click to write it'>&#f7c948/{label} booster &7<give|item|remove|check></hover></click> &7- timed boosters"
+    event: " <click:suggest_command:'/{label} event '><hover:show_text:'&7Click to write it'>&#f7c948/{label} event &7<start|stop></hover></click> &7- more mobcoins for everybody"
     settings: " <click:run_command:'/{label} settings'><hover:show_text:'&7Click to open'>&#f7c948/{label} settings</hover></click> &7- every option in a menu"
     editor: " <click:run_command:'/{label} editor'><hover:show_text:'&7Click to open'>&#f7c948/{label} editor &7[menu]</hover></click> &7- edit menus and shops in game &8(also /{label} layout)"
     layout: " <click:suggest_command:'/{label} layout '><hover:show_text:'&7Click to write it'>&#f7c948/{label} layout &7<add|import|chest|remove> <menu></hover></click> &7- build a menu in a chest"
@@ -101,6 +108,18 @@ usage:
   remove: "{prefix}&7Use &#f7c948/{label} remove <player|*> <amount> [-s]"
   set: "{prefix}&7Use &#f7c948/{label} set <player> <amount> [-s]"
   migrate: "{prefix}&7Use &#f7c948/{label} migrate <yaml|sqlite|mysql>"
+  withdraw: "{prefix}&7Use &#f7c948/{label} withdraw <amount>"
+  stats: "{prefix}&7Use &#f7c948/{label} stats <player>"
+  booster:
+    - "{prefix}&7Boosters (a multiplier of the mob drops for some time):"
+    - " <click:suggest_command:'/{label} booster give '><hover:show_text:'&7Click to write it'>&#f7c948/{label} booster give &7<player> <multiplier> <time></hover></click> &7- start it now"
+    - " <click:suggest_command:'/{label} booster item '><hover:show_text:'&7Click to write it'>&#f7c948/{label} booster item &7<player> <multiplier> <time> [amount]</hover></click> &7- item to use later"
+    - " <click:suggest_command:'/{label} booster remove '><hover:show_text:'&7Click to write it'>&#f7c948/{label} booster remove &7<player></hover></click> &7- remove every booster"
+    - " <click:suggest_command:'/{label} booster check '><hover:show_text:'&7Click to write it'>&#f7c948/{label} booster check &7[player]</hover></click> &7- active boosters"
+    - " &7Time: &f30m&7, &f1h&7, &f1h30m&7, &f2d"
+  event:
+    - " <click:suggest_command:'/{label} event start '><hover:show_text:'&7Click to write it'>&#f7c948/{label} event start &7<multiplier> <time></hover></click> &7- e.g. 2 1h"
+    - " <click:run_command:'/{label} event stop'><hover:show_text:'&7Click to stop it'>&#f7c948/{label} event stop</hover></click> &7- end it now"
   multiplier:
     - "{prefix}&7Multipliers of the mob drops:"
     - " <click:suggest_command:'/{label} multiplier set '><hover:show_text:'&7Click to write it'>&#f7c948/{label} multiplier set &7<player> <value></hover></click> &7- multiplier of a player"
@@ -148,9 +167,112 @@ top:
     - ""
     - " <gradient:#f7b733:#fce38a><bold>TOP MOBCOINS</bold></gradient>"
     - ""
+  weekly-header:
+    - ""
+    - " <gradient:#f7b733:#fce38a><bold>TOP OF THE WEEK</bold></gradient> &7(mobcoins from mobs)"
+    - ""
+  monthly-header:
+    - ""
+    - " <gradient:#f7b733:#fce38a><bold>TOP OF THE MONTH</bold></gradient> &7(mobcoins from mobs)"
+    - ""
   line: " &#f7c948#{position} &f{name} &7- {amount_commas}"
   empty: " &7Nobody has mobcoins yet."
+  period-empty: " &7Nobody got mobcoins from mobs yet."
   footer: ""
+
+# End of a week / month (config.yml > tops). {1_name} {1_amount} {2_name} {2_amount} {3_name} {3_amount} {period}
+tops:
+  weekly-ended:
+    - ""
+    - " <gradient:#f7b733:#fce38a><bold>WEEKLY TOP</bold></gradient> &7- the week is over!"
+    - " &#f7c948#1 &f{1_name} &7- {1_amount}"
+    - " &#f7c948#2 &f{2_name} &7- {2_amount}"
+    - " &#f7c948#3 &f{3_name} &7- {3_amount}"
+    - ""
+  monthly-ended:
+    - ""
+    - " <gradient:#f7b733:#fce38a><bold>MONTHLY TOP</bold></gradient> &7- the month is over!"
+    - " &#f7c948#1 &f{1_name} &7- {1_amount}"
+    - " &#f7c948#2 &f{2_name} &7- {2_amount}"
+    - " &#f7c948#3 &f{3_name} &7- {3_amount}"
+    - ""
+
+# /mobcoins stats [player]
+stats:
+  lines:
+    - ""
+    - " <gradient:#f7b733:#fce38a><bold>STATS</bold></gradient> &7of &f{target}"
+    - ""
+    - " &7Mobs killed: &f{kills} &8({golden} golden)"
+    - " &7Mobcoins from mobs: &#f7c948{earned}"
+    - " &7This week: &#f7c948{weekly} &8(#{weekly_position}) &7· This month: &#f7c948{monthly} &8(#{monthly_position})"
+    - " &7Best combo: &f{best_combo}"
+    - " &7Booster: {booster}"
+    - " &7Most killed: {top_mobs}"
+    - ""
+  mob: "&f{mob} &8({kills})"
+  mob-separator: "&7, "
+  no-mobs: "&8none yet"
+  booster: "&#f7c948x{multiplier} &8({time} left)"
+  no-booster: "&8none"
+
+# Timed boosters (/mobcoins booster). {multiplier} {time}
+booster:
+  given: "{prefix}&7Booster &#f7c948x{multiplier} &7for &f{target}&7: &f{time} &7left."
+  received: "{prefix}&7You got a &#f7c948x{multiplier} &7mobcoins booster: &f{time} &7left!"
+  item-given: "{prefix}&7Gave &f{amount} &7booster item(s) &#f7c948x{multiplier} &8({time}) &7to &f{target}&7."
+  item-received: "{prefix}&7You got &f{amount} &7booster item(s) &#f7c948x{multiplier} &8({time})&7. Right click to use."
+  activated: "{prefix}&7Booster &#f7c948x{multiplier} &7active: &f{time} &7left!"
+  stronger: "{prefix}&7You already have a stronger booster &8(&#f7c948x{multiplier}&8, &f{time} &7left&8)&7."
+  creative: "{prefix}&7Boosters can't be used in creative mode."
+  ended: "{prefix}&7Your &#f7c948x{multiplier} &7booster ended."
+  removed: "{prefix}&7Removed &f{count} &7booster(s) of &f{target}&7."
+  removed-you: "{prefix}&7Your mobcoins boosters were removed."
+  none: "{prefix}&7You have no active booster."
+  none-other: "{prefix}&f{target} &7has no active booster."
+  list-header: "{prefix}&7Active boosters of &f{target}&7:"
+  list-line: " &8» &#f7c948x{multiplier} &7- &f{time} &7left"
+  # Boss bar (config.yml > boosters.bossbar)
+  bossbar: "&#f7c948MobCoins booster x{multiplier} &8| &f{time} left"
+
+# Events (/mobcoins event). {multiplier} {time}
+event:
+  started:
+    - ""
+    - " <gradient:#f7b733:#fce38a><bold>MOBCOINS EVENT</bold></gradient>"
+    - " &7Every mob gives &#f7c948x{multiplier} &7mobcoins for &f{time}&7!"
+    - ""
+  started-console: "{prefix}&7Event started: &#f7c948x{multiplier} &7for &f{time}&7."
+  ended: "{prefix}&7The &#f7c948x{multiplier} &7mobcoins event is over."
+  info: "{prefix}&7Event: &#f7c948x{multiplier} &7mobcoins, &f{time} &7left."
+  none: "{prefix}&7No event is running."
+  # Boss bar (config.yml > events.bossbar)
+  bossbar: "<gradient:#f7b733:#fce38a>x{multiplier} MOBCOINS EVENT</gradient> &8| &f{time} left"
+
+# Combo (drops.yml > combo). {amount} {combo} {combo_multiplier}
+combo:
+  received: "&#f7c948+{amount} mobcoins &8| &7Combo &f{combo} &8(&#f7c948x{combo_multiplier}&8)"
+  lost: "&7Combo ended at &f{combo}"
+
+anti-farm:
+  limit: "&7You reached the limit of &#f7c948{max} &7mobcoins per hour from mobs"
+
+# Notes (/mobcoins withdraw)
+withdraw:
+  disabled: "{prefix}&7Notes are turned off."
+  done: "{prefix}&7You withdrew &#f7c948{amount_commas} &7mobcoins into a note."
+  redeemed: "{prefix}&7You redeemed &#f7c948{amount_commas} &7mobcoins."
+  min: "{prefix}&7You can withdraw at least &#f7c948{min} &7mobcoins."
+  not-enough: "{prefix}&7You don't have &#f7c948{amount_commas} &7mobcoins &8(&7you have {mobcoins_commas}&8)&7."
+  creative: "{prefix}&7Notes can't be used in creative mode."
+  invalid: "{prefix}&cThis note was already redeemed or is not real: it was removed."
+
+# Sell loot (/mobcoins sell)
+sell:
+  disabled: "{prefix}&7Selling is turned off."
+  sold: "{prefix}&7Sold &f{count} &7items for &#f7c948{amount_commas} &7mobcoins."
+  nothing: "{prefix}&7Nothing to sell: these items can't be sold."
+  prices: "{prefix}&7Prices: &f{prices}"
 
 shop:
   disabled: "{prefix}&7The shop is turned off."
@@ -184,6 +306,8 @@ drops:
 # "Write it in chat" of the admin menus
 input:
   hint: "{prefix}<click:suggest_command:'{current}'><hover:show_text:'&7Click to write it'>&8[&7now: &f{current}&8]</hover></click> &7Write &fcancel &7to go back."
+  # when there is no value yet
+  hint-empty: "{prefix}&7Write &fcancel &7to go back."
   cancelled: "{prefix}&7Cancelled."
 
 editor:

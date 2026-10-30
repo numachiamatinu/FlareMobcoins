@@ -262,6 +262,16 @@ public final class EditorSession implements InventoryHolder {
     }
 
     public void handleClose(InventoryCloseEvent e) {
+        // an item of the menu still on the cursor goes back where it was (closing must not delete it)
+        ItemStack cursor = viewer.getItemOnCursor();
+        String cursorTag = tagOf(cursor);
+        if (cursorTag != null && inventory != null) {
+            int back = homeSlot(cursorTag);
+            if (back >= 0) {
+                inventory.setItem(back, cursor.clone());
+                viewer.setItemOnCursor(null);
+            }
+        }
         save();
         PlayerInventory inv = viewer.getInventory();
         for (int i = 0; i < inv.getSize(); i++) {
@@ -269,6 +279,27 @@ public final class EditorSession implements InventoryHolder {
         }
         if (isEditorItem(viewer.getItemOnCursor())) viewer.setItemOnCursor(null);
         plugin.lang().send(viewer, "editor.saved", "{menu}", def.id);
+    }
+
+    /** An empty slot where an item of the menu was (its own slots first), -1 if the menu is full. */
+    private int homeSlot(String tag) {
+        List<Integer> own = new ArrayList<>();
+        try {
+            if (tag.startsWith("i:") || tag.startsWith("l:")) {
+                MenuItem item = def.items.get(tag.substring(2));
+                if (item != null) own.addAll(item.slots);
+            } else if (tag.startsWith("d:")) {
+                int index = Integer.parseInt(tag.substring(2));
+                for (MenuDef.Deco d : def.decorations) if (d.index == index) own.addAll(d.slots);
+            } else if (tag.startsWith("r:") && def.rotation != null) {
+                own.addAll(def.rotation.slots(tag.equals("r:premium")));
+            }
+        } catch (RuntimeException ignored) {
+            // any empty slot below
+        }
+        for (int slot : own) if (slot >= 0 && slot < inventory.getSize() && empty(inventory.getItem(slot))) return slot;
+        for (int slot = 0; slot < inventory.getSize(); slot++) if (empty(inventory.getItem(slot))) return slot;
+        return -1;
     }
 
     ConfigurationSection section(String key) {

@@ -1,6 +1,74 @@
 # Changelog — FlareMobcoins (TMDevelopment, formerly FlaresDevelopment)
 
-Versions go up by one step for every update: 4.0.1, 4.0.2, 4.0.3...
+Fixes raise the last number (4.0.1, 4.0.2...), new features the middle one (4.1.0, 4.2.0...).
+
+## 4.1.0
+
+### New
+- **Timed boosters**: `/mobcoins booster give <player> <multiplier> <time>` (e.g. `2 1h`) multiplies the mob drops of a
+  player for some time. `/mobcoins booster item <player> <multiplier> <time> [amount]` gives booster items to use later
+  with a right click (good for your store). Same multiplier = the time is added; a booster item can't be used while a
+  stronger one is active. Boss bar with the time left (1.9+), `/mobcoins booster` shows your boosters,
+  `remove` and `check` for admins. Boosters survive restarts and, with MySQL, work on every server of the network.
+- **Events**: `/mobcoins event start <multiplier> <time>` = more mobcoins for everybody, with a message, a boss bar and
+  a countdown; `/mobcoins event stop` ends it. With MySQL the event is on every server of the network.
+- **Golden mobs** (`drops.yml > golden-mobs`): 1% of the hostile mobs spawn golden, with a name above them and a
+  shining outline (1.9+), and give x5 mobcoins. Chance, multiplier, mobs, name and actions can be changed.
+  Spawner mobs and mobs of other plugins are never golden (unless `from-spawners: true`). On for new servers;
+  servers that update get it off (your economy doesn't change by itself): turn it on in `/mobcoins settings`.
+- **Combo** (`drops.yml > combo`, off): kills in a row raise the multiplier (5 kills x1.1 ... 50 kills x2) for a few
+  seconds, shown in the action bar. Mob farms can't abuse it: mobs from spawners, eggs and breeding, and kills over
+  the limit in the same chunk don't count and get no combo multiplier.
+- **Anti-farm** (`drops.yml > anti-farm`, off): most mobcoins per hour from mobs, and fewer mobcoins after many kills
+  in the same chunk.
+- **MythicMobs** 4.x and 5.x: `mythic: SkeletonKing` in a drops.yml entry (also `entity: "mythic:Name"` or a list),
+  `entity: MYTHIC` for every MythicMobs mob without its own entry, `mythicmobs.normal-entries` (mobs without an entry
+  use ZOMBIE, HOSTILE ...) and `mythicmobs.level-bonus` (extra percent per level). Found by itself, no library needed;
+  one quick lookup per kill. `{mythic}` = name of the MythicMobs mob in drop actions.
+- **Stats**: `/mobcoins stats [player]` shows mobs killed, golden mobs, mobcoins from mobs (total, week, month and
+  position), best combo, active booster and the most killed mobs. Placeholders `kills`, `kills_<mob>`, `earned`,
+  `golden_kills`, `best_combo` ...
+- **Weekly and monthly top**: `/mobcoins top weekly|monthly [chat]` and three new buttons in the top menu
+  (all time / this week / this month, the shown one shines) plus a "Your stats" button. When a week or a month ends
+  the best players get the rewards of `config.yml > tops` (off by default): `[mobcoins]`, `[console]`, `[message]`,
+  `[broadcast]`, positions like `1`, `2`, `4-10`. With MySQL they are given only once for the whole network; a server
+  that was off gives them when it starts.
+- **Notes** (`config.yml > withdraw`, off): `/mobcoins withdraw <amount>` turns mobcoins into an item to trade, right
+  click to get them back. Every note has its own id saved in the storage and can be redeemed once: copied or duped
+  notes give nothing (also across a MySQL network). Not in creative mode (`flaremobcoins.redeem.creative`).
+- **Sell loot** (`config.yml > sell`, off): `/mobcoins sell` opens a menu (put the items in, close = sold),
+  `/mobcoins sell hand`, `/mobcoins sell all`, `/mobcoins sell prices`. Only normal items are sold (no renamed items).
+- New switches in `/mobcoins settings` (golden mobs, combo, anti-farm, notes, sell, weekly and monthly rewards) and
+  `/mobcoins stats` in Player access.
+- New placeholders: `top_weekly_<n>_name` / `_mobcoins`, `top_monthly_<n>_...`, `position_weekly`, `position_monthly`,
+  `earned_weekly`, `earned_monthly`, `combo`, `combo_multiplier`, `booster`, `booster_time`, `event_multiplier`,
+  `event_time`, `event_active`, `hour_left`.
+- New permissions: `flaremobcoins.command.stats` (`.others`), `.sell`, `.withdraw` (everyone), `.booster`, `.event`
+  (op), `flaremobcoins.booster.use`, `flaremobcoins.redeem` (everyone), `flaremobcoins.redeem.creative` (op).
+- `/mobcoins migrate` also copies stats, boosters and the event.
+
+### Fixed
+- On 1.21+ the editor (and the chest builder) still wrote the whole shop file again when the shop had an item sold with
+  "sell the item in your hand": new versions write the same item with its parts in another order, and the check of
+  4.0.1 took it for a change. Items are now compared as items, so only the edited lines change on every version.
+  If the whole file ever has to be written again, the console says why.
+- Closing the editor with an item of the menu on the cursor removed it from the menu: it now goes back to its slot.
+
+### Improved
+- New options of `drops.yml` are added to the file of the server by themselves, with their comments; your mobs and
+  multipliers are never touched. New elements of the plugin menus are copied with their quotes and comments.
+- Paper: a mob death cancelled by another plugin gives no mobcoins.
+- Blocks the editor writes again, new shops of the chest builder and the new lines of an update are written like the
+  files of the plugin: texts in "double quotes", lists as `- item`.
+- The console says when a menu file of the plugin got new buttons or texts.
+- `/mobcoins booster remove` also tells the player; the "Your stats" button of the top is hidden when stats are off
+  for the player.
+- Stats are written together every 30 seconds and when a player leaves (another server of the network reads them
+  when he joins it); a failed write is tried again with the next one.
+- The startup banner and `/mobcoins about` show the new features and the MythicMobs hook.
+
+### Anonymous statistics
+- New anonymous values: golden mobs, combo, anti-farm, sell and withdraw on / off, and whether MythicMobs is installed.
 
 ## 4.0.1
 

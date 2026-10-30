@@ -109,6 +109,295 @@ public final class SqlStorage implements Storage {
         dedupe(c);
         quiet(c, "CREATE TABLE IF NOT EXISTS " + table + "_purchases (who VARCHAR(36) NOT NULL, item VARCHAR(100) NOT NULL, "
                 + "period VARCHAR(16) NOT NULL, amount INT NOT NULL, PRIMARY KEY (who, item, period))");
+        quiet(c, "CREATE TABLE IF NOT EXISTS " + table + "_stats (uuid VARCHAR(36) NOT NULL, stat VARCHAR(64) NOT NULL, "
+                + "value DOUBLE NOT NULL DEFAULT 0, PRIMARY KEY (uuid, stat))");
+        quiet(c, sqlite() ? "CREATE INDEX IF NOT EXISTS " + table + "_stats_stat ON " + table + "_stats (stat, value)"
+                : "CREATE INDEX " + table + "_stats_stat ON " + table + "_stats (stat, value)");
+    }
+
+    // ------------------------------------------------------------------ stats, boosters, events
+
+    @Override
+    public java.util.Map<String, Double> stats(String who) throws Exception {
+        return read(c -> {
+            java.util.Map<String, Double> out = new java.util.HashMap<>();
+            try (PreparedStatement ps = c.prepareStatement("SELECT stat, value FROM " + table + "_stats WHERE uuid = ?")) {
+                ps.setString(1, who);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) out.put(rs.getString(1), rs.getDouble(2));
+                }
+            }
+            return out;
+        });
+    }
+
+    @Override
+    public void addStats(java.util.Map<String, java.util.Map<String, Double>> deltas) throws Exception {
+        if (deltas.isEmpty()) return;
+        // always the same order: two servers writing the same rows never wait for each other in a circle
+        java.util.TreeMap<String, java.util.TreeMap<String, Double>> sorted = new java.util.TreeMap<>();
+        for (java.util.Map.Entry<String, java.util.Map<String, Double>> who : deltas.entrySet()) {
+            sorted.put(who.getKey(), new java.util.TreeMap<>(who.getValue()));
+        }
+        SQLException last = null;
+        for (int attempt = 0; attempt < 3; attempt++) {
+            try {
+                addStatsOnce(sorted);
+                return;
+            } catch (SQLException e) {
+                last = e;
+                // deadlock / lost connection (MySQL): a new connection and once more
+                if (sqlite()) throw e;
+                close();
+                try {
+                    Thread.sleep(50L * (attempt + 1));
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw e;
+                }
+            }
+        }
+        throw last;
+    }
+
+    private void addStatsOnce(java.util.Map<String, java.util.TreeMap<String, Double>> deltas) throws SQLException {
+        Connection c = connection();
+        boolean auto = c.getAutoCommit();
+        c.setAutoCommit(false);
+        try {
+            if (sqlite()) {
+                try (PreparedStatement insert = c.prepareStatement("INSERT OR IGNORE INTO " + table + "_stats (uuid, stat, value) VALUES (?, ?, 0)");
+                     PreparedStatement update = c.prepareStatement("UPDATE " + table + "_stats SET value = value + ? WHERE uuid = ? AND stat = ?")) {
+                    for (java.util.Map.Entry<String, java.util.TreeMap<String, Double>> who : deltas.entrySet()) {
+                        for (java.util.Map.Entry<String, Double> e : who.getValue().entrySet()) {
+                            insert.setString(1, who.getKey());
+                            insert.setString(2, e.getKey());
+                            insert.addBatch();
+                            update.setDouble(1, e.getValue());
+                            update.setString(2, who.getKey());
+                            update.setString(3, e.getKey());
+                            update.addBatch();
+                        }
+                    }
+                    insert.executeBatch();
+                    update.executeBatch();
+                }
+            } else {
+                // one statement per row: no shared lock taken first (INSERT IGNORE + UPDATE could deadlock)
+                try (PreparedStatement ps = c.prepareStatement("INSERT INTO " + table + "_stats (uuid, stat, value) VALUES (?, ?, ?) "
+                        + "ON DUPLICATE KEY UPDATE value = value + VALUES(value)")) {
+                    for (java.util.Map.Entry<String, java.util.TreeMap<String, Double>> who : deltas.entrySet()) {
+                        for (java.util.Map.Entry<String, Double> e : who.getValue().entrySet()) {
+                            ps.setString(1, who.getKey());
+                            ps.setString(2, e.getKey());
+                            ps.setDouble(3, e.getValue());
+                            ps.addBatch();
+                        }
+                    }
+                    ps.executeBatch();
+                }
+            }
+            c.commit();
+        } catch (SQLException e) {
+            try {
+                c.rollback();
+            } catch (SQLException ignored) {
+            }
+            throw e;
+        } finally {
+            try {
+                c.setAutoCommit(auto);
+            } catch (SQLException ignored) {
+            }
+        }
+    }
+
+    @Override
+    public void deleteStatIfAtMost(String who, String key, double max) throws Exception {
+        write(c -> {
+            try (PreparedStatement ps = c.prepareStatement("DELETE FROM " + table + "_stats WHERE uuid = ? AND stat = ? AND value <= ?")) {
+                ps.setString(1, who);
+                ps.setString(2, key);
+                ps.setDouble(3, max);
+                return ps.executeUpdate();
+            }
+        });
+    }
+
+    @Override
+    public void maxStat(String who, String key, double value) throws Exception {
+        write(c -> {
+            try (PreparedStatement ps = c.prepareStatement((sqlite() ? "INSERT OR IGNORE" : "INSERT IGNORE") + " INTO " + table
+                    + "_stats (uuid, stat, value) VALUES (?, ?, ?)")) {
+                ps.setString(1, who);
+                ps.setString(2, key);
+                ps.setDouble(3, value);
+                ps.executeUpdate();
+            }
+            try (PreparedStatement ps = c.prepareStatement("UPDATE " + table + "_stats SET value = ? WHERE uuid = ? AND stat = ? AND value < ?")) {
+                ps.setDouble(1, value);
+                ps.setString(2, who);
+                ps.setString(3, key);
+                ps.setDouble(4, value);
+                return ps.executeUpdate();
+            }
+        });
+    }
+
+    @Override
+    public double takeStat(String who, String key) throws Exception {
+        Double v = read(c -> {
+            try (PreparedStatement ps = c.prepareStatement("SELECT value FROM " + table + "_stats WHERE uuid = ? AND stat = ?")) {
+                ps.setString(1, who);
+                ps.setString(2, key);
+                try (ResultSet rs = ps.executeQuery()) {
+                    return rs.next() ? rs.getDouble(1) : null;
+                }
+            }
+        });
+        if (v == null) return -1;
+        // only the server that really deletes the row gets the value
+        int deleted = write(c -> {
+            try (PreparedStatement ps = c.prepareStatement("DELETE FROM " + table + "_stats WHERE uuid = ? AND stat = ?")) {
+                ps.setString(1, who);
+                ps.setString(2, key);
+                return ps.executeUpdate();
+            }
+        });
+        return deleted > 0 ? v : -1;
+    }
+
+    @Override
+    public void setStats(java.util.Map<String, java.util.Map<String, Double>> values) throws Exception {
+        if (values.isEmpty()) return;
+        Connection c = connection();
+        boolean auto = c.getAutoCommit();
+        c.setAutoCommit(false);
+        try (PreparedStatement ps = c.prepareStatement((sqlite() ? "INSERT OR REPLACE" : "REPLACE") + " INTO " + table
+                + "_stats (uuid, stat, value) VALUES (?, ?, ?)")) {
+            int n = 0;
+            for (java.util.Map.Entry<String, java.util.Map<String, Double>> who : values.entrySet()) {
+                for (java.util.Map.Entry<String, Double> e : who.getValue().entrySet()) {
+                    ps.setString(1, who.getKey());
+                    ps.setString(2, e.getKey());
+                    ps.setDouble(3, e.getValue());
+                    ps.addBatch();
+                    if (++n % 500 == 0) ps.executeBatch();
+                }
+            }
+            ps.executeBatch();
+            c.commit();
+        } catch (SQLException e) {
+            try {
+                c.rollback();
+            } catch (SQLException ignored) {
+            }
+            throw e;
+        } finally {
+            try {
+                c.setAutoCommit(auto);
+            } catch (SQLException ignored) {
+            }
+        }
+    }
+
+    @Override
+    public void setStat(String who, String key, double value) throws Exception {
+        write(c -> {
+            if (value == 0) {
+                try (PreparedStatement ps = c.prepareStatement("DELETE FROM " + table + "_stats WHERE uuid = ? AND stat = ?")) {
+                    ps.setString(1, who);
+                    ps.setString(2, key);
+                    return ps.executeUpdate();
+                }
+            }
+            int changed;
+            try (PreparedStatement ps = c.prepareStatement("UPDATE " + table + "_stats SET value = ? WHERE uuid = ? AND stat = ?")) {
+                ps.setDouble(1, value);
+                ps.setString(2, who);
+                ps.setString(3, key);
+                changed = ps.executeUpdate();
+            }
+            if (changed == 0) {
+                try (PreparedStatement ps = c.prepareStatement((sqlite() ? "INSERT OR REPLACE" : "REPLACE") + " INTO " + table
+                        + "_stats (uuid, stat, value) VALUES (?, ?, ?)")) {
+                    ps.setString(1, who);
+                    ps.setString(2, key);
+                    ps.setDouble(3, value);
+                    ps.executeUpdate();
+                }
+            }
+            return null;
+        });
+    }
+
+    @Override
+    public List<Account> topStat(String key, int size) throws Exception {
+        return read(c -> {
+            List<String> ids = new ArrayList<>();
+            List<Double> values = new ArrayList<>();
+            try (PreparedStatement ps = c.prepareStatement("SELECT uuid, value FROM " + table + "_stats WHERE stat = ? AND value > 0 "
+                    + "ORDER BY value DESC LIMIT ?")) {
+                ps.setString(1, key);
+                ps.setInt(2, size);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        ids.add(rs.getString(1));
+                        values.add(rs.getDouble(2));
+                    }
+                }
+            }
+            // names in a second query: the old table may have another collation (no JOIN between the two)
+            java.util.Map<String, String> names = new java.util.HashMap<>();
+            if (!ids.isEmpty()) {
+                StringBuilder in = new StringBuilder();
+                for (int i = 0; i < ids.size(); i++) in.append(i == 0 ? "?" : ", ?");
+                try (PreparedStatement ps = c.prepareStatement("SELECT uuid, player FROM " + table + " WHERE uuid IN (" + in + ")")) {
+                    for (int i = 0; i < ids.size(); i++) ps.setString(i + 1, ids.get(i));
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) names.put(rs.getString(1), rs.getString(2));
+                    }
+                }
+            }
+            List<Account> out = new ArrayList<>();
+            for (int i = 0; i < ids.size(); i++) {
+                UUID id;
+                try {
+                    id = UUID.fromString(ids.get(i));
+                } catch (Exception e) {
+                    continue;
+                }
+                out.add(new Account(id, names.get(ids.get(i)), Num.round(values.get(i)), 1));
+            }
+            return out;
+        });
+    }
+
+    @Override
+    public java.util.Map<String, java.util.Map<String, Double>> allStats() throws Exception {
+        return read(c -> {
+            java.util.Map<String, java.util.Map<String, Double>> out = new java.util.HashMap<>();
+            try (Statement st = c.createStatement();
+                 ResultSet rs = st.executeQuery("SELECT uuid, stat, value FROM " + table + "_stats")) {
+                while (rs.next()) out.computeIfAbsent(rs.getString(1), k -> new java.util.HashMap<>()).put(rs.getString(2), rs.getDouble(3));
+            }
+            return out;
+        });
+    }
+
+    @Override
+    public void deleteStats(String prefix, java.util.Collection<String> keep) throws Exception {
+        write(c -> {
+            StringBuilder sql = new StringBuilder("DELETE FROM " + table + "_stats WHERE stat LIKE ?");
+            for (int i = 0; i < keep.size(); i++) sql.append(" AND stat <> ?");
+            try (PreparedStatement ps = c.prepareStatement(sql.toString())) {
+                // prefixes are "week:" and "month:" (no _ or %)
+                ps.setString(1, prefix + "%");
+                int i = 2;
+                for (String k : keep) ps.setString(i++, k);
+                return ps.executeUpdate();
+            }
+        });
     }
 
     // ------------------------------------------------------------------ shop limits and stock

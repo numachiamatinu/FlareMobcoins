@@ -149,7 +149,9 @@ public final class Num {
 
     public static double parseDouble(String s, double def) {
         try {
-            return Double.parseDouble(s.trim());
+            double v = Double.parseDouble(s.trim());
+            // "NaN" and "Infinity" are numbers for Java, not for us
+            return Double.isNaN(v) || Double.isInfinite(v) ? def : v;
         } catch (Exception e) {
             return def;
         }

@@ -113,7 +113,12 @@ final class YamlPatch {
         if (p < 0) return null;
         int pInd = indent(lines[p]);
         String after = lines[p].substring(keyColon(lines[p]) + 1).trim();
-        if (!after.isEmpty() && !after.startsWith("#")) return null; // "parent: {}" or a value: written again by the caller
+        if (after.equals("{}") || after.equals("[]")) {
+            // an empty section of a new file ("items: {}"): it becomes "items:" with the new key under it
+            lines[p] = lines[p].substring(0, keyColon(lines[p]) + 1);
+            after = "";
+        }
+        if (!after.isEmpty() && !after.startsWith("#")) return null; // a value: written again by the caller
         int end = blockEnd(lines, p, pInd);
         // indent of the children already there, or 2 more than the parent
         int childInd = pInd + 2;

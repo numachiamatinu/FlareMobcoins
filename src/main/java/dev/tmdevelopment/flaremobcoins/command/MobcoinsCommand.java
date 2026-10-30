@@ -37,14 +37,17 @@ import java.util.concurrent.CompletableFuture;
 /** /mobcoins [balance|pay|shop|drops|top|give|remove|set|multiplier|settings|editor|reload|migrate|version|help] */
 public final class MobcoinsCommand implements CommandExecutor, TabCompleter, Listener {
 
-    private static final List<String> SUBS = Arrays.asList("help", "balance", "pay", "menu", "shop", "drops", "top", "give",
-            "remove", "set", "multiplier", "settings", "editor", "layout", "reload", "migrate", "about", "version");
+    private static final List<String> SUBS = Arrays.asList("help", "balance", "pay", "menu", "shop", "drops", "top", "stats",
+            "sell", "withdraw", "give", "remove", "set", "multiplier", "booster", "event", "settings", "editor", "layout", "reload",
+            "migrate", "about", "version");
     private final FlareMobcoins plugin;
+    private final ExtraCommands extra;
     private final Map<UUID, Long> payCooldown = new HashMap<>();
     private final Map<UUID, Long> lastLookup = new HashMap<>();
 
     public MobcoinsCommand(FlareMobcoins plugin) {
         this.plugin = plugin;
+        this.extra = new ExtraCommands(plugin);
     }
 
     private Lang lang() {
@@ -77,7 +80,8 @@ public final class MobcoinsCommand implements CommandExecutor, TabCompleter, Lis
 
     /** Commands that can be turned off for normal players (config.yml > player-access). */
     private static boolean isPlayerFeature(String sub) {
-        return sub.equals("menu") || sub.equals("shop") || sub.equals("drops") || sub.equals("top") || sub.equals("pay");
+        return sub.equals("menu") || sub.equals("shop") || sub.equals("drops") || sub.equals("top") || sub.equals("pay")
+                || sub.equals("stats");
     }
 
     /** The player has the permission and the command is not turned off for him. */
@@ -131,6 +135,25 @@ public final class MobcoinsCommand implements CommandExecutor, TabCompleter, Lis
             case "top":
             case "baltop":
                 top(sender, label, args);
+                return true;
+            case "stats":
+            case "stat":
+                extra.stats(sender, label, args);
+                return true;
+            case "booster":
+            case "boost":
+            case "boosters":
+                extra.booster(sender, label, args);
+                return true;
+            case "event":
+                extra.event(sender, label, args);
+                return true;
+            case "withdraw":
+            case "note":
+                extra.withdraw(sender, label, args);
+                return true;
+            case "sell":
+                extra.sell(sender, label, args);
                 return true;
             case "settings":
             case "admin":
@@ -197,13 +220,30 @@ public final class MobcoinsCommand implements CommandExecutor, TabCompleter, Lis
         }
         lang().send(sender, "help.header", "{label}", label);
         boolean admin = false;
-        for (String sub : new String[]{"balance", "pay", "menu", "shop", "drops", "top", "give", "remove", "set", "multiplier",
-                "settings", "editor", "layout", "reload", "migrate", "version"}) {
-            if (!allowed(sender, sub.equals("layout") ? "editor" : sub)) continue;
+        for (String sub : new String[]{"balance", "pay", "menu", "shop", "drops", "top", "stats", "sell", "withdraw", "booster-self",
+                "give", "remove", "set", "multiplier", "booster", "event", "settings", "editor", "layout", "reload", "migrate", "version"}) {
+            if (!helpVisible(sender, sub)) continue;
             if (sub.equals("give") || sub.equals("remove") || sub.equals("set")) admin = true;
             lang().send(sender, "help.lines." + sub, "{label}", label);
         }
         if (admin) lang().send(sender, "help.footer", "{label}", label);
+    }
+
+    /** A help line: the player can use it and the feature is on. */
+    private boolean helpVisible(CommandSender sender, String sub) {
+        switch (sub) {
+            case "layout":
+                return allowed(sender, "editor");
+            case "sell":
+                return plugin.sell().enabled() && allowed(sender, "sell");
+            case "withdraw":
+                return plugin.notes().enabled() && allowed(sender, "withdraw");
+            case "booster-self":
+                // players see "/mobcoins booster" (their boosters), admins the full line
+                return sender instanceof Player && !perm(sender, "booster");
+            default:
+                return allowed(sender, sub);
+        }
     }
 
     private static String[] amountPairs(double amount) {
@@ -412,25 +452,34 @@ public final class MobcoinsCommand implements CommandExecutor, TabCompleter, Lis
             return;
         }
         // the list is read again first (new balances show at once, not at the next refresh)
-        coins().refreshTopThen(() -> {
+        coins().refreshTopThen(() -> plugin.stats().refreshTops(Math.max(10, plugin.getConfig().getInt("top.size", 10)), () -> {
             if (sender instanceof Player && !((Player) sender).isOnline()) return;
             showTop(sender, label, args);
-        });
+        }));
     }
 
     private void showTop(CommandSender sender, String label, String[] args) {
+        // "/mobcoins top weekly|monthly [chat]": mobcoins from mobs this week / month
+        String mode = "balance";
+        List<String> rest = new ArrayList<>(Arrays.asList(args).subList(1, args.length));
+        if (!rest.isEmpty() && (rest.get(0).equalsIgnoreCase("weekly") || rest.get(0).equalsIgnoreCase("week")
+                || rest.get(0).equalsIgnoreCase("monthly") || rest.get(0).equalsIgnoreCase("month"))) {
+            mode = rest.remove(0).toLowerCase(Locale.ROOT).startsWith("week") ? "weekly" : "monthly";
+            if (!plugin.periodTops().enabled(mode)) mode = "balance";
+        }
+        boolean chat = !rest.isEmpty() && rest.get(0).equalsIgnoreCase("chat");
         // players get the menu (menus/top.yml), "/mobcoins top chat" and the console the chat list
-        if (sender instanceof Player && (args.length < 2 || !args[1].equalsIgnoreCase("chat"))) {
+        if (sender instanceof Player && !chat) {
             MenuDef menu = plugin.menus().builtin("top");
             if (menu != null && menu.enabled()) {
-                plugin.menus().open((Player) sender, "top", true);
+                plugin.menus().openTop((Player) sender, mode);
                 return;
             }
         }
-        List<Storage.Account> list = coins().top();
-        lang().send(sender, "top.header", "{label}", label);
+        List<Storage.Account> list = mode.equals("weekly") ? plugin.stats().weekly() : mode.equals("monthly") ? plugin.stats().monthly() : coins().top();
+        lang().send(sender, mode.equals("balance") ? "top.header" : "top." + mode + "-header", "{label}", label);
         if (list.isEmpty()) {
-            lang().send(sender, "top.empty");
+            lang().send(sender, mode.equals("balance") ? "top.empty" : "top.period-empty");
         } else {
             int n = Math.min(list.size(), Math.max(1, plugin.getConfig().getInt("top.size", 10)));
             for (int i = 0; i < n; i++) {
@@ -596,6 +645,7 @@ public final class MobcoinsCommand implements CommandExecutor, TabCompleter, Lis
         Storage target = plugin.createStorage(to);
         String name = to;
         lang().send(sender, "admin.migrate-start", "{target}", name);
+        plugin.stats().flush();
         coins().migrate(target, result -> {
             if (result.startsWith("error: ")) lang().send(sender, "admin.migrate-error", "{error}", result.substring(7));
             else lang().send(sender, "admin.migrate-done", "{target}", name, "{count}", result);
@@ -683,6 +733,7 @@ public final class MobcoinsCommand implements CommandExecutor, TabCompleter, Lis
                 {"FlareTokens", String.valueOf(dev.tmdevelopment.flaremobcoins.hook.TokensHook.available())},
                 {"ItemsAdder", String.valueOf(enabled("ItemsAdder"))},
                 {"ExecutableItems", String.valueOf(enabled("ExecutableItems"))},
+                {"MythicMobs", String.valueOf(dev.tmdevelopment.flaremobcoins.hook.MythicHook.available())},
                 {"RoseStacker", String.valueOf(enabled("RoseStacker"))},
                 {"WildStacker", String.valueOf(enabled("WildStacker"))}};
         for (String[] h : list) {
@@ -737,11 +788,27 @@ public final class MobcoinsCommand implements CommandExecutor, TabCompleter, Lis
             List<String> out = new ArrayList<>();
             for (String s : SUBS) {
                 String need = s.equals("about") ? "version" : s.equals("layout") ? "editor" : s;
-                if ((s.equals("help") || allowed(sender, need)) && s.startsWith(args[0].toLowerCase(Locale.ROOT))) out.add(s);
+                boolean show = s.equals("help") || allowed(sender, need);
+                if (s.equals("sell")) show = show && plugin.sell().enabled();
+                if (s.equals("withdraw")) show = show && plugin.notes().enabled();
+                if (s.equals("booster")) show = sender instanceof Player || perm(sender, "booster");
+                if (s.equals("event")) show = true;
+                if (show && s.startsWith(args[0].toLowerCase(Locale.ROOT))) out.add(s);
             }
             return out;
         }
         String sub = args[0].toLowerCase(Locale.ROOT);
+        switch (sub) {
+            case "booster":
+            case "boost":
+            case "event":
+            case "withdraw":
+            case "sell":
+            case "stats":
+                return extra.tab(sender, sub.equals("boost") ? "booster" : sub, args);
+            default:
+                break;
+        }
         if (args.length == 2) {
             switch (sub) {
                 case "shop":
@@ -772,9 +839,10 @@ public final class MobcoinsCommand implements CommandExecutor, TabCompleter, Lis
                 case "version":
                 case "ver":
                     return perm(sender, "version") ? filter(Collections.singletonList("permissions"), args[1]) : Collections.<String>emptyList();
+                case "top":
+                    return filter(Arrays.asList("weekly", "monthly", "chat"), args[1]);
                 case "menu":
                 case "gui":
-                case "top":
                 case "reload":
                 case "help":
                     return Collections.emptyList();
@@ -802,6 +870,8 @@ public final class MobcoinsCommand implements CommandExecutor, TabCompleter, Lis
                 case "shop":
                 case "open":
                     return players(args[2]);
+                case "top":
+                    return args[1].equalsIgnoreCase("chat") ? Collections.<String>emptyList() : filter(Collections.singletonList("chat"), args[2]);
                 case "multiplier":
                     return args[1].equalsIgnoreCase("global") ? Arrays.asList("1", "1.5", "2") : players(args[2]);
                 default:
@@ -815,6 +885,14 @@ public final class MobcoinsCommand implements CommandExecutor, TabCompleter, Lis
             }
         }
         return Collections.emptyList();
+    }
+
+    static List<String> playersStatic(String start) {
+        return players(start);
+    }
+
+    static List<String> filterStatic(List<String> options, String start) {
+        return filter(options, start);
     }
 
     private static List<String> players(String start) {

@@ -20,7 +20,7 @@ public final class SettingsMenu extends Gui {
 
     @Override
     protected int rows() {
-        return 5;
+        return 6;
     }
 
     private void flip(String file, String path, boolean now) {
@@ -100,7 +100,23 @@ public final class SettingsMenu extends Gui {
                     openLater();
                 }, this::openLater));
 
-        set(28, value("ENDER_CHEST", "gui.settings.main-shop", plugin.menus().mainShop()),
+        // 4.1.0 features
+        boolean golden = plugin.drops().goldenEnabled();
+        set(28, toggle("GOLD_BLOCK", "gui.settings.golden-mobs", golden), e -> flip("drops.yml", "golden-mobs.enabled", golden));
+        boolean combo = plugin.drops().comboEnabled();
+        set(29, toggle("BLAZE_POWDER", "gui.settings.combo", combo), e -> flip("drops.yml", "combo.enabled", combo));
+        boolean farm = plugin.drops().antiFarmEnabled();
+        set(30, toggle("HOPPER", "gui.settings.anti-farm", farm), e -> flip("drops.yml", "anti-farm.enabled", farm));
+        boolean withdraw = plugin.getConfig().getBoolean("withdraw.enabled", false);
+        set(31, toggle("PAPER", "gui.settings.withdraw", withdraw), e -> flip("config.yml", "withdraw.enabled", withdraw));
+        boolean sell = plugin.getConfig().getBoolean("sell.enabled", false);
+        set(32, toggle("BONE", "gui.settings.sell", sell), e -> flip("config.yml", "sell.enabled", sell));
+        boolean weekly = plugin.getConfig().getBoolean("tops.weekly.rewards-enabled", false);
+        set(33, toggle("CLOCK", "gui.settings.weekly-rewards", weekly), e -> flip("config.yml", "tops.weekly.rewards-enabled", weekly));
+        boolean monthly = plugin.getConfig().getBoolean("tops.monthly.rewards-enabled", false);
+        set(34, toggle("DIAMOND", "gui.settings.monthly-rewards", monthly), e -> flip("config.yml", "tops.monthly.rewards-enabled", monthly));
+
+        set(37, value("ENDER_CHEST", "gui.settings.main-shop", plugin.menus().mainShop()),
                 e -> plugin.chatInput().ask(viewer, "settings.ask-main-shop", plugin.menus().mainShop(), text -> {
                     String name = text.trim();
                     if (plugin.menus().get(name) == null) lang().send(viewer, "shop.not-found", "{shop}", name);
@@ -110,18 +126,18 @@ public final class SettingsMenu extends Gui {
                     }
                     openLater();
                 }, this::openLater));
-        set(30, button("PAINTING", "gui.settings.menus", "{shops}", String.valueOf(plugin.menus().size())),
+        set(39, button("PAINTING", "gui.settings.menus", "{shops}", String.valueOf(plugin.menus().size())),
                 e -> new LayoutListMenu(plugin, viewer).openLater());
-        set(31, button("IRON_DOOR", "gui.settings.access"), e -> new AccessMenu(plugin, viewer).openLater());
-        set(32, button("KNOWLEDGE_BOOK", "gui.settings.top"), e -> plugin.menus().openLater(viewer, Builtins.TOP, null));
-        set(34, button("ZOMBIE_HEAD", "gui.settings.drops-menu"), e -> plugin.menus().openLater(viewer, Builtins.DROPS, null));
-        set(40, button("LIME_DYE", "gui.settings.reload"), e -> Bukkit.getScheduler().runTask(plugin, () -> {
+        set(40, button("IRON_DOOR", "gui.settings.access"), e -> new AccessMenu(plugin, viewer).openLater());
+        set(41, button("KNOWLEDGE_BOOK", "gui.settings.top"), e -> plugin.menus().openLater(viewer, Builtins.TOP, null));
+        set(43, button("ZOMBIE_HEAD", "gui.settings.drops-menu"), e -> plugin.menus().openLater(viewer, Builtins.DROPS, null));
+        set(49, button("LIME_DYE", "gui.settings.reload"), e -> Bukkit.getScheduler().runTask(plugin, () -> {
             viewer.closeInventory();
             plugin.reloadAll();
             lang().send(viewer, "general.reloaded", "{shops}", String.valueOf(plugin.menus().size()),
                     "{drops}", String.valueOf(plugin.drops().size()));
         }));
-        set(44, button("BARRIER", "gui.common.close"), e -> Bukkit.getScheduler().runTask(plugin, viewer::closeInventory));
+        set(53, button("BARRIER", "gui.common.close"), e -> Bukkit.getScheduler().runTask(plugin, viewer::closeInventory));
         fill();
     }
 
@@ -129,7 +145,7 @@ public final class SettingsMenu extends Gui {
     static final class AccessMenu extends Gui {
 
         private static final String[][] KEYS = {{"menu", "SUNFLOWER"}, {"shop", "CHEST"}, {"drops", "ROTTEN_FLESH"},
-                {"top", "KNOWLEDGE_BOOK"}, {"pay", "GOLD_INGOT"}};
+                {"top", "KNOWLEDGE_BOOK"}, {"pay", "GOLD_INGOT"}, {"stats", "BOOK"}};
 
         AccessMenu(FlareMobcoins plugin, Player viewer) {
             super(plugin, viewer);
@@ -147,7 +163,7 @@ public final class SettingsMenu extends Gui {
 
         @Override
         protected void build() {
-            int[] slots = {11, 12, 13, 14, 15};
+            int[] slots = {10, 11, 12, 14, 15, 16};
             for (int i = 0; i < KEYS.length; i++) {
                 String path = "player-access." + KEYS[i][0];
                 boolean on = plugin.getConfig().getBoolean(path, true);

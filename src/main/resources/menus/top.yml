@@ -9,7 +9,9 @@
 #  admin-only      true = players don't see it
 #  actions         [close] [back] [open] <menu> [player] cmd [console] cmd [message] text [sound] key
 #  entries         one slot per player of the top list (top.size in config.yml)
-#  Placeholders    entries: {position} {name} {amount} {amount_commas} {amount_formatted}
+#  all-time, weekly, monthly   show the balances / the mobcoins from mobs of this week / month (the shown one shines)
+#  stats           closes the menu and shows /mobcoins stats
+#  Placeholders    entries: {position} {name} {amount} {amount_commas} {amount_formatted} {mode} (texts > modes)
 #
 #  ── Format ──────────────────────────────────────────────
 #  Colors    &a &c &e &f &7 ...   &l bold  &o italic  &n underline
@@ -28,15 +30,45 @@ elements:
     material: "head:{name}"
     name: "&#f7c948#{position} &f{name}"
     lore:
-      - "&7MobCoins: &f{amount_commas}"
+      - "&7{mode}: &f{amount_commas}"
+  all-time:
+    slots: "38"
+    admin-only: false
+    material: "GOLD_INGOT"
+    name: "&#f7c948All time"
+    lore:
+      - "&7Who has the most mobcoins"
+  weekly:
+    slots: "39"
+    admin-only: false
+    material: "CLOCK"
+    name: "&#f7c948This week"
+    lore:
+      - "&7Most mobcoins from mobs"
+      - "&7since Monday"
   back:
     slots: "40"
     admin-only: false
     material: "ARROW"
     name: "&c← Back"
     lore: []
+  monthly:
+    slots: "41"
+    admin-only: false
+    material: "DIAMOND"
+    name: "&#f7c948This month"
+    lore:
+      - "&7Most mobcoins from mobs"
+      - "&7this month"
+  stats:
+    slots: "42"
+    admin-only: false
+    material: "BOOK"
+    name: "&#f7c948Your stats"
+    lore:
+      - "&7Kills, best combo, boosters"
 decorations:
-  - slots: "0-9,17,18,26,27,35-39,41-44"
+  - slots: "0-9,17,18,26,27,35-37,43,44"
     material: "YELLOW_STAINED_GLASS_PANE"
     name: " "
     lore: []
@@ -50,3 +82,11 @@ texts:
     material: "BARRIER"
     name: "&7Nobody has mobcoins yet"
     lore: []
+  period-empty:
+    material: "BARRIER"
+    name: "&7Nobody got mobcoins from mobs yet"
+    lore: []
+  modes:
+    balance: "MobCoins"
+    weekly: "This week"
+    monthly: "This month"

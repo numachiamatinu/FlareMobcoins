@@ -579,6 +579,8 @@ public final class CoinManager {
                 if (a.multiplier != 1) target.setMultiplier(a.uuid, a.name, a.multiplier, 0);
                 n++;
             }
+            // stats, boosters and the event go too
+            target.setStats(storage.allStats());
             target.flush();
             target.close();
             int count = n;
@@ -588,15 +590,15 @@ public final class CoinManager {
 
     // ------------------------------------------------------------------ threads
 
-    private interface Work {
+    interface Work {
         void run() throws Exception;
     }
 
-    private void async(Work work) {
+    void async(Work work) {
         async(work, (Consumer<Throwable>) null);
     }
 
-    private void async(Work work, CompletableFuture<?> f) {
+    void async(Work work, CompletableFuture<?> f) {
         async(work, t -> sync(() -> f.completeExceptionally(t)));
     }
 
@@ -615,7 +617,7 @@ public final class CoinManager {
         }
     }
 
-    private void sync(Runnable r) {
+    void sync(Runnable r) {
         if (plugin.isEnabled() && !Bukkit.isPrimaryThread()) {
             try {
                 Bukkit.getScheduler().runTask(plugin, r);
